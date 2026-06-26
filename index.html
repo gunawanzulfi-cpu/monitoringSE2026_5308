@@ -295,6 +295,9 @@
                     </button>
                 </div>
                 <div class="bg-white p-4 sm:p-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                    <div id="modal-shared-note" style="display:none" class="mb-3 text-[11px] bg-orange-50 border border-orange-200 text-orange-700 rounded-lg px-3 py-2">
+                        ⚠ Petugas ini berbagi desa dengan PPL lain. Untuk desa berbagi, angka adalah <b>perkiraan bagi rata</b> (CSV hanya mencatat total per desa, bukan per orang).
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse text-xs sm:text-sm">
                             <thead>
@@ -356,7 +359,8 @@ const KEC_GID = {
 };
 
 // ===================== STATE =====================
-let rawData = [];
+let rawData = [];   // per PPL (untuk kartu & ranking)
+let rawDesa = [];   // per desa (untuk tabel detail & peta) - poin 2
 let progressChart=null, statusPieChart=null, approveRadarChart=null,
     rankingChart=null, gaugeChart=null, kecMap=null, mapLayer=null;
 
@@ -370,36 +374,47 @@ function fmt(n){ return (Math.round(n)||0).toLocaleString('id-ID'); }
 window.addEventListener('DOMContentLoaded', () => { loadData(); });
 
 // ===================== DATA BUILD (merge mapping + progress) =====================
+// Menghasilkan DUA dataset:
+//  - rawDesa: 1 baris per DESA (poin 2). Desa multi-PPL: nama PPL digabung, angka = asli CSV.
+//  - rawData: 1 baris per PPL (untuk kartu & ranking). Desa multi-PPL: BAGI RATA + flag shared.
 // progressByDesa: { kode: {open,draft,submit,reject,approve} }
 function buildRecords(progressByDesa){
-    const records=[];
+    const perDesa=[]; const perPPL=[];
     MAPPING.forEach(m=>{
         const prog = progressByDesa[m.kode] || {open:0,draft:0,submit:0,reject:0,approve:0};
         const dt = {}; STAT.forEach(s=> dt[s]= prog[s]||0);
         const ppls = m.ppls;
+        const total = STAT.reduce((s,k)=>s+dt[k],0);
+        // ---- PER DESA (angka asli, semua nama PPL) ----
+        const pplNames = ppls.map(p=>p.ppl).filter(n=>n && !n.startsWith('('));
+        perDesa.push({kode:m.kode,kec:m.kec,desa:m.desa,
+            korwil:ppls[0].korwil, pml:[...new Set(ppls.map(p=>p.pml))].join(' / '),
+            ppl: pplNames.length?pplNames.join(', '):'(Belum dipetakan)',
+            pplCount: ppls.length, lat:m.lat,lon:m.lon, ...dt, total});
+        // ---- PER PPL ----
         if(ppls.length===1){
             const p=ppls[0];
-            records.push({kode:m.kode,kec:m.kec,desa:m.desa,korwil:p.korwil,pml:p.pml,ppl:p.ppl,
-                lat:m.lat,lon:m.lon, ...dt, total:STAT.reduce((s,k)=>s+dt[k],0)});
+            perPPL.push({kode:m.kode,kec:m.kec,desa:m.desa,korwil:p.korwil,pml:p.pml,ppl:p.ppl,
+                shared:false, nppl:1, lat:m.lat,lon:m.lon, ...dt, total});
         } else {
-            const W=ppls.reduce((s,p)=>s+p.wt,0)||1;
-            const alloc=ppls.map(()=>({}));
+            // BAGI RATA (largest remainder agar jumlah tetap = total desa)
+            const n=ppls.length; const alloc=ppls.map(()=>({}));
             STAT.forEach(k=>{
-                const tot=dt[k]; const raw=ppls.map(p=>tot*p.wt/W); const fl=raw.map(x=>Math.floor(x));
-                let rem=tot-fl.reduce((a,b)=>a+b,0);
-                const order=ppls.map((_,i)=>i).sort((a,b)=>(raw[b]-fl[b])-(raw[a]-fl[a]));
-                for(let j=0;j<rem;j++) fl[order[j]]++;
-                ppls.forEach((p,i)=>alloc[i][k]=fl[i]);
+                const tot=dt[k]; const base=Math.floor(tot/n); let rem=tot-base*n;
+                ppls.forEach((p,i)=>alloc[i][k]=base);
+                for(let j=0;j<rem;j++) alloc[j][k]++;
             });
             ppls.forEach((p,i)=>{
                 const c=alloc[i];
-                records.push({kode:m.kode,kec:m.kec,desa:m.desa,korwil:p.korwil,pml:p.pml,ppl:p.ppl,
-                    lat:m.lat,lon:m.lon, ...c, total:STAT.reduce((s,k)=>s+c[k],0)});
+                perPPL.push({kode:m.kode,kec:m.kec,desa:m.desa,korwil:p.korwil,pml:p.pml,ppl:p.ppl,
+                    shared:true, nppl:n, lat:m.lat,lon:m.lon, ...c, total:STAT.reduce((s,k)=>s+c[k],0)});
             });
         }
     });
-    records.sort((a,b)=> a.kec.localeCompare(b.kec)||a.desa.localeCompare(b.desa)||a.ppl.localeCompare(b.ppl));
-    return records;
+    perDesa.sort((a,b)=> a.kec.localeCompare(b.kec)||a.desa.localeCompare(b.desa));
+    perPPL.sort((a,b)=> a.kec.localeCompare(b.kec)||a.desa.localeCompare(b.desa)||a.ppl.localeCompare(b.ppl));
+    rawDesa = perDesa;
+    return perPPL;
 }
 
 // ===================== LOAD (live or snapshot) =====================
@@ -509,24 +524,36 @@ window.onSearchInput=function(){
     applyFilters();
 };
 
+function curFilters(){
+    return {
+        ko:document.getElementById('filter-korwil').value,
+        pm:document.getElementById('filter-pml').value,
+        kc:document.getElementById('filter-kecamatan').value,
+        kw:document.getElementById('search-ppl').value.toLowerCase()
+    };
+}
+// per-PPL (kartu, ranking, summary)
 function getFiltered(){
-    const ko=document.getElementById('filter-korwil').value;
-    const pm=document.getElementById('filter-pml').value;
-    const kc=document.getElementById('filter-kecamatan').value;
-    const kw=document.getElementById('search-ppl').value.toLowerCase();
+    const {ko,pm,kc,kw}=curFilters();
     return rawData.filter(i=> (ko==='all'||i.korwil===ko)&&(pm==='all'||i.pml===pm)&&(kc==='all'||i.kec===kc)&&(i.ppl.toLowerCase().includes(kw)));
+}
+// per-desa (tabel detail, peta, KPI, radar/kecamatan) - poin 2. Cari PPL match thd nama gabungan + PML bisa multi.
+function getFilteredDesa(){
+    const {ko,pm,kc,kw}=curFilters();
+    return rawDesa.filter(i=> (ko==='all'||i.korwil===ko)&&(pm==='all'||i.pml.includes(pm))&&(kc==='all'||i.kec===kc)&&(i.ppl.toLowerCase().includes(kw)));
 }
 
 function applyFilters(){
-    const f=getFiltered();
-    renderKPIs(f);
-    renderGaugeFunnel(f);
+    const f=getFiltered();       // per PPL
+    const fd=getFilteredDesa();  // per desa
+    renderKPIs(fd);
+    renderGaugeFunnel(fd);
     renderRankingChart(f);
-    renderApproveRadar(f);
-    renderMap(f);
+    renderApproveRadar(fd);
+    renderMap(fd);
     renderPPLSummary(f);
-    renderCharts(f);
-    renderTable(f);
+    renderCharts(fd);
+    renderTable(fd);
     renderKecamatanDrilldown(document.getElementById('filter-kecamatan').value);
 }
 
@@ -695,8 +722,9 @@ function renderPPLSummary(data){
     const cont=document.getElementById('ppl-summary-container'); cont.innerHTML='';
     const g={};
     data.forEach(i=>{
-        g[i.ppl]=g[i.ppl]||{open:0,draft:0,submit:0,reject:0,approve:0,total:0,desa:[],pml:[],korwil:[]};
+        g[i.ppl]=g[i.ppl]||{open:0,draft:0,submit:0,reject:0,approve:0,total:0,desa:[],pml:[],korwil:[],shared:false};
         STAT.forEach(s=>g[i.ppl][s]+=i[s]); g[i.ppl].total+=i.total;
+        if(i.shared) g[i.ppl].shared=true;
         if(i.desa&&!g[i.ppl].desa.includes(i.desa))g[i.ppl].desa.push(i.desa);
         if(i.pml&&!g[i.ppl].pml.includes(i.pml))g[i.ppl].pml.push(i.pml);
         if(i.korwil&&!g[i.ppl].korwil.includes(i.korwil))g[i.ppl].korwil.push(i.korwil);
@@ -712,11 +740,12 @@ function renderPPLSummary(data){
         let cc='bg-white border-slate-200', pc='bg-slate-400';
         if(parseFloat(pct)>=75){cc='bg-emerald-50/50 border-emerald-200';pc='bg-emerald-600';}
         else if(parseFloat(pct)>0){cc='bg-amber-50/50 border-amber-200';pc='bg-amber-500';}
+        const sharedBadge = gr.shared ? `<span class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 shrink-0" title="Petugas berbagi desa dengan PPL lain. Angka = perkiraan bagi rata, bukan data per orang.">⚠ Berbagi desa</span>` : '';
         cont.innerHTML+=`<div onclick="openPplDetail('${name.replace(/'/g,"\\'")}')" class="p-4 rounded-xl border ${cc} shadow-xs flex flex-col justify-between space-y-3 cursor-pointer hover:scale-[1.01] hover:shadow-md transition duration-200">
             <div>
                 <div class="flex justify-between items-start gap-2">
-                    <h4 class="font-bold text-slate-900 text-xs sm:text-sm truncate max-w-[75%]">${name}</h4>
-                    <span class="text-xs font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 shrink-0">${pct}%</span>
+                    <h4 class="font-bold text-slate-900 text-xs sm:text-sm truncate max-w-[60%]">${name}</h4>
+                    <div class="flex items-center gap-1 shrink-0">${sharedBadge}<span class="text-xs font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">${pct}%</span></div>
                 </div>
                 <div class="mt-1.5 space-y-0.5 border-b border-slate-100/70 pb-2 text-[10px] text-slate-500">
                     <p class="truncate"><b>Korwil:</b> ${gr.korwil.join(', ')}</p>
@@ -742,10 +771,15 @@ function renderPPLSummary(data){
 window.openPplDetail=function(name){
     document.getElementById('modal-ppl-name').innerText=name;
     const tb=document.getElementById('modal-sls-tbody'); tb.innerHTML='';
-    rawData.filter(i=>i.ppl===name).forEach(t=>{
+    const rows=rawData.filter(i=>i.ppl===name);
+    const anyShared=rows.some(t=>t.shared);
+    const noteEl=document.getElementById('modal-shared-note');
+    if(noteEl) noteEl.style.display = anyShared ? 'block' : 'none';
+    rows.forEach(t=>{
         const pd=progDoc(t); const pct=t.total>0?((pd/t.total)*100).toFixed(1):'0.0';
+        const sh=t.shared?` <span class="text-[9px] text-orange-600">(berbagi, ÷${t.nppl})</span>`:'';
         tb.innerHTML+=`<tr class="hover:bg-slate-50 transition-colors">
-            <td class="py-2.5 px-3"><div class="font-semibold text-slate-900">${t.desa}</div><div class="text-[10px] text-indigo-600 font-medium">Kec. ${t.kec}</div></td>
+            <td class="py-2.5 px-3"><div class="font-semibold text-slate-900">${t.desa}${sh}</div><div class="text-[10px] text-indigo-600 font-medium">Kec. ${t.kec}</div></td>
             <td class="py-2.5 px-1 text-center text-blue-600 font-medium">${t.open}</td>
             <td class="py-2.5 px-1 text-center text-purple-600 font-medium">${t.draft}</td>
             <td class="py-2.5 px-1 text-center text-amber-600 font-medium">${t.submit}</td>
@@ -763,7 +797,7 @@ window.closeModal=function(){ document.getElementById('sls-modal').classList.add
 // ===================== STACKED + PIE =====================
 function renderCharts(data){
     const cd=[...data].sort((a,b)=>b.total-a.total).slice(0,15);
-    const labels=cd.map(d=>`${d.ppl.substring(0,10)}.. (${d.desa})`);
+    const labels=cd.map(d=>`${d.desa} (${d.kec.substring(0,4)})`);
     if(progressChart) progressChart.destroy();
     progressChart=new Chart(document.getElementById('progressChart').getContext('2d'),{
         type:'bar',
@@ -790,16 +824,17 @@ function renderCharts(data){
 // ===================== TABLE =====================
 function renderTable(data){
     const tb=document.getElementById('data-table-body');
-    document.getElementById('table-row-count').innerText=`${data.length} Petugas / Tugas`;
+    document.getElementById('table-row-count').innerText=`${data.length} Desa / Wilayah`;
     if(data.length===0){ tb.innerHTML=`<tr><td colspan="11" class="text-center py-6 text-slate-400">Tidak ada data</td></tr>`; return; }
     const sorted=[...data].sort((a,b)=>{ const pa=a.total>0?progDoc(a)/a.total:0, pb=b.total>0?progDoc(b)/b.total:0; return pa-pb; });
     let html='';
     sorted.forEach((it,idx)=>{
         const pd=progDoc(it); const pct=it.total>0?((pd/it.total)*100).toFixed(1):'0.0';
+        const multi = it.pplCount>1 ? `<span class="ml-1 inline-block text-[9px] bg-indigo-100 text-indigo-700 px-1 rounded">${it.pplCount} PPL</span>` : '';
         html+=`<tr class="hover:bg-slate-50">
             <td class="p-3 pl-4 text-xs">${idx+1}</td>
             <td class="p-3 text-xs"><b>${it.korwil}</b><br><span class="text-slate-400">PML: ${it.pml}</span></td>
-            <td class="p-3 text-xs font-medium">${it.ppl}</td>
+            <td class="p-3 text-xs font-medium">${it.ppl}${multi}</td>
             <td class="p-3 text-xs">${it.kec}<br><span class="text-slate-400">${it.desa}</span></td>
             <td class="p-3 text-center text-blue-600 text-xs">${it.open}</td>
             <td class="p-3 text-center text-purple-600 text-xs">${it.draft}</td>
@@ -820,7 +855,7 @@ function renderKecamatanDrilldown(kec){
     if(kec==='all'){ cont.classList.add('hidden'); return; }
     cont.classList.remove('hidden'); list.innerHTML='';
     const dm={};
-    rawData.forEach(i=>{ if(i.kec===kec){ dm[i.desa]=dm[i.desa]||{t:0,p:0}; dm[i.desa].t+=i.total; dm[i.desa].p+=progDoc(i); } });
+    rawDesa.forEach(i=>{ if(i.kec===kec){ dm[i.desa]=dm[i.desa]||{t:0,p:0}; dm[i.desa].t+=i.total; dm[i.desa].p+=progDoc(i); } });
     Object.keys(dm).sort().forEach(d=>{
         const info=dm[d]; const pct=info.t>0?((info.p/info.t)*100).toFixed(1):'0.0';
         list.innerHTML+=`<div class="p-3 bg-indigo-50/50 rounded-lg border border-indigo-100 flex flex-col justify-between">
