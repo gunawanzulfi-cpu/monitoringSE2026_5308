@@ -6,6 +6,7 @@
     <title>Dashboard Monitoring SE2026 - Kabupaten Lembata</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -23,9 +24,12 @@
         .kpi-card{cursor:pointer; position:relative; outline:2px solid transparent; outline-offset:2px;}
         .kpi-card:hover{outline-color:#4f46e5;}                 /* indigo-400 saat hover */
         .kpi-card.anom-active{outline-color:#312e81; box-shadow:0 0 0 3px rgba(49,46,129,.25), 0 10px 22px -10px rgba(49,46,129,.35);} /* indigo-600 saat dipilih */
+        /* ====== Filter input hover ====== */
+        .filter-input{transition:transform .15s ease, box-shadow .15s ease;}
+        .filter-input:hover{transform:translateY(-2px); box-shadow:0 4px 12px -2px rgba(49,46,129,0.30);}
         /* ====== KPI delta glow ====== */
-        .delta-up{color:#10b981; text-shadow:0 0 8px rgba(16,185,129,0.65), 0 0 16px rgba(16,185,129,0.3);}
-        .delta-dn{color:#f43f5e; text-shadow:0 0 6px rgba(244,63,94,0.5);}
+        .delta-up{color:#15803d; background:#dcfce7; padding:2px 6px; border-radius:5px; font-size:11px;}
+        .delta-dn{color:#b91c1c; background:#fee2e2; padding:2px 6px; border-radius:5px; font-size:11px;}
         /* ====== ANOMALI: util kecil ====== */
         .anom-row{transition:background-color .12s ease;}
         .anom-row:hover{background:#eef2ff;}
@@ -54,7 +58,7 @@
         /* kontainer chart & strip kecil tetap terang supaya isi terbaca */
         #view-progres .bg-slate-50{background:#f8fafc;}
         /* area chart (parent canvas) -> panel putih supaya sumbu & label terbaca */
-        #view-progres canvas{background:#ffffff; border-radius:.5rem;}
+        #view-progres canvas{background:rgba(255,255,255,0.85); border-radius:.5rem;}
         /* strip "Progres Hari Ini" dll & kartu PPL -> panel putih + teks gelap */
         #view-progres .bg-slate-50/50{background:#ffffff !important;}
     </style>
@@ -101,25 +105,25 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                     <label class="block text-xs font-semibold text-white mb-1">Koordinator Wilayah (Korwil)</label>
-                    <select id="filter-korwil" onchange="onFilterChange('filter-korwil')" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600">
+                    <select id="filter-korwil" onchange="onFilterChange('filter-korwil')" class="filter-input w-full bg-white/85 border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600">
                         <option value="all">Semua Korwil</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-white mb-1">Pengawas Lapangan (PML)</label>
-                    <select id="filter-pml" onchange="onFilterChange('filter-pml')" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600">
+                    <select id="filter-pml" onchange="onFilterChange('filter-pml')" class="filter-input w-full bg-white/85 border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600">
                         <option value="all">Semua PML</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-white mb-1">Kecamatan</label>
-                    <select id="filter-kecamatan" onchange="onFilterChange('filter-kecamatan')" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600">
+                    <select id="filter-kecamatan" onchange="onFilterChange('filter-kecamatan')" class="filter-input w-full bg-white/85 border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600">
                         <option value="all">Semua Kecamatan</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-white mb-1">Cari Petugas Pencacah (PPL)</label>
-                    <input type="text" id="search-ppl" oninput="onSearchInput()" placeholder="Ketik nama PPL..." class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600">
+                    <input type="text" id="search-ppl" oninput="onSearchInput()" placeholder="Ketik nama PPL..." class="filter-input w-full bg-white/85 border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600">
                 </div>
             </div>
             <div id="kecamatan-drilldown-container" class="mt-6 pt-6 border-t border-slate-100 hidden">
@@ -132,7 +136,7 @@
 
         <!-- KPI CARDS -->
         <div class="prog-kpi-wrap grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2.5">
-            <div class="kpi-card bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
+            <div class="kpi-card bg-white/75 p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
                 <span class="text-[10px] font-bold text-slate-900 uppercase">Target Dok.</span>
                 <span id="kpi-target" class="kpi-num text-xl font-bold text-slate-900 mt-2">-</span>
                 <div class="text-[10px] text-slate-400 mt-1">Beban Alokasi</div>
@@ -243,7 +247,7 @@
                         <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
                     </button>
                 </div>
-                <select id="radar-mode" onchange="renderApproveRadar(radarData())" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:outline-indigo-600 mt-2">
+                <select id="radar-mode" onchange="renderApproveRadar(radarData())" class="w-full bg-white/75 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:outline-indigo-600 mt-2">
                     <option value="banding">Progres vs Approve</option>
                     <option value="progres">% Progres</option>
                     <option value="approve">% Approve</option>
@@ -261,7 +265,7 @@
                         <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
                     </button>
                 </div>
-                <select id="ranking-mode" onchange="renderRankingChart(rankingData())" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:outline-indigo-600 mt-2">
+                <select id="ranking-mode" onchange="renderRankingChart(rankingData())" class="w-full bg-white/75 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:outline-indigo-600 mt-2">
                     <option value="korwil">Peringkat Korwil</option>
                     <option value="pml">Peringkat PML</option>
                     <option value="kec">Peringkat Kecamatan</option>
@@ -293,7 +297,7 @@
                         Unduh 9 Kartu
                     </button>
                     <label class="text-xs font-semibold text-slate-600">Urutkan:</label>
-                    <select id="sort-ppl-summary" onchange="applyFilters()" class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-indigo-600">
+                    <select id="sort-ppl-summary" onchange="applyFilters()" class="bg-white/75 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-indigo-600">
                         <option value="lowest">% Progres Terendah</option>
                         <option value="highest">% Progres Tertinggi</option>
                         <option value="real_low">Jumlah Progres Tersedikit</option>
@@ -341,18 +345,18 @@
             <div class="overflow-auto custom-scrollbar" style="max-height:560px">
                 <table class="w-full text-left border-collapse text-sm">
                     <thead class="sticky top-0 z-10">
-                        <tr class="bg-indigo-950 text-indigo-100 font-semibold border-b border-indigo-800 text-xs uppercase">
+                        <tr class="bg-indigo-950 text-indigo-100 font-semibold border-b border-indigo-800 text-xs uppercase" id="detail-table-head">
                             <th class="p-3 pl-4">No</th>
-                            <th class="p-3">Korwil / PML</th>
-                            <th class="p-3">Nama PPL</th>
-                            <th class="p-3">Wilayah Tugas</th>
-                            <th class="p-3 text-center">Open</th>
-                            <th class="p-3 text-center">Draft</th>
-                            <th class="p-3 text-center">Submit</th>
-                            <th class="p-3 text-center">Reject</th>
-                            <th class="p-3 text-center">Approve</th>
-                            <th class="p-3 text-center">Total</th>
-                            <th class="p-3 pr-4 text-right">Progres %</th>
+                            <th class="p-3 cursor-pointer select-none hover:text-white" onclick="detailSort('korwil')">Korwil / PML <span id="dsort-korwil"></span></th>
+                            <th class="p-3 cursor-pointer select-none hover:text-white" onclick="detailSort('ppl')">Nama PPL <span id="dsort-ppl"></span></th>
+                            <th class="p-3 cursor-pointer select-none hover:text-white" onclick="detailSort('wilayah')">Wilayah Tugas <span id="dsort-wilayah"></span></th>
+                            <th class="p-3 text-center cursor-pointer select-none hover:text-white" onclick="detailSort('open')">Open <span id="dsort-open"></span></th>
+                            <th class="p-3 text-center cursor-pointer select-none hover:text-white" onclick="detailSort('draft')">Draft <span id="dsort-draft"></span></th>
+                            <th class="p-3 text-center cursor-pointer select-none hover:text-white" onclick="detailSort('submit')">Submit <span id="dsort-submit"></span></th>
+                            <th class="p-3 text-center cursor-pointer select-none hover:text-white" onclick="detailSort('reject')">Reject <span id="dsort-reject"></span></th>
+                            <th class="p-3 text-center cursor-pointer select-none hover:text-white" onclick="detailSort('approve')">Approve <span id="dsort-approve"></span></th>
+                            <th class="p-3 text-center cursor-pointer select-none hover:text-white" onclick="detailSort('total')">Total <span id="dsort-total"></span></th>
+                            <th class="p-3 pr-4 text-right cursor-pointer select-none hover:text-white" onclick="detailSort('pct')">Progres % <span id="dsort-pct">▲</span></th>
                         </tr>
                     </thead>
                     <tbody id="data-table-body" class="divide-y divide-slate-100 text-slate-700 bg-white">
@@ -368,40 +372,38 @@
 
         <!-- ===== CARD 1: FILTER (samakan dgn filter Progres: 3 dropdown + search) ===== -->
         <div class="anom-theme-card rounded-xl p-3 sm:p-4">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-                <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+            <div class="flex flex-row items-center justify-between gap-2 mb-2">
+                <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2 flex-wrap">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
                     Filter Anomali
+                    <span id="anom-source-label" class="text-xs font-normal normal-case tracking-normal text-white/70"></span>
                 </h2>
-                <div class="flex items-center gap-1 bg-indigo-50 rounded-lg p-1 self-start shadow-sm">
-                    <button data-jenis="semua"    onclick="anomSetJenis('semua')"    class="anom-jenisbtn anom-tabbtn px-3 py-1.5 rounded-md text-xs font-semibold bg-indigo-700 text-white shadow-sm">Semua</button>
-                    <button data-jenis="usaha"    onclick="anomSetJenis('usaha')"    class="anom-jenisbtn anom-tabbtn px-3 py-1.5 rounded-md text-xs font-semibold text-indigo-900 hover:bg-indigo-200">Usaha</button>
-                    <button data-jenis="keluarga" onclick="anomSetJenis('keluarga')" class="anom-jenisbtn anom-tabbtn px-3 py-1.5 rounded-md text-xs font-semibold text-indigo-900 hover:bg-indigo-200">Keluarga</button>
+                <div class="flex items-center gap-1 bg-indigo-50 rounded-lg p-0.5 shrink-0 shadow-sm">
+                    <button data-jenis="semua"    onclick="anomSetJenis('semua')"    class="anom-jenisbtn anom-tabbtn px-3 py-0.5 rounded-md text-xs font-semibold bg-indigo-700 text-white shadow-sm">Semua</button>
+                    <button data-jenis="usaha"    onclick="anomSetJenis('usaha')"    class="anom-jenisbtn anom-tabbtn px-3 py-0.5 rounded-md text-xs font-semibold text-indigo-900 hover:bg-indigo-200">Usaha</button>
+                    <button data-jenis="keluarga" onclick="anomSetJenis('keluarga')" class="anom-jenisbtn anom-tabbtn px-3 py-0.5 rounded-md text-xs font-semibold text-indigo-900 hover:bg-indigo-200">Keluarga</button>
                 </div>
             </div>
-            <p id="anom-source-label" class="text-xs text-white/85 mb-3"></p>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                     <label class="block text-xs font-semibold text-white mb-1">Kecamatan</label>
-                    <select id="anom-filter-kec" onchange="anomOnKecChange()" class="w-full bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600"><option value="all">Semua Kecamatan</option></select>
+                    <select id="anom-filter-kec" onchange="anomOnKecChange()" class="filter-input w-full bg-white/85 border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600"><option value="all">Semua Kecamatan</option></select>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-white mb-1">Desa/Kelurahan</label>
-                    <select id="anom-filter-desa" onchange="anomRender()" class="w-full bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600"><option value="all">Semua Desa</option></select>
+                    <select id="anom-filter-desa" onchange="anomRender()" class="filter-input w-full bg-white/85 border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600"><option value="all">Semua Desa</option></select>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-white mb-1">Jenis Anomali</label>
-                    <select id="anom-filter-anomali" onchange="anomRender()" class="w-full bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600"><option value="all">Semua Jenis</option></select>
+                    <select id="anom-filter-anomali" onchange="anomRender()" class="filter-input w-full bg-white/85 border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600"><option value="all">Semua Jenis</option></select>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-white mb-1">Cari Usaha/Desa</label>
-                    <input id="anom-search" oninput="anomRender()" type="text" placeholder="Ketik nama usaha / desa…" class="w-full bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600">
+                    <input id="anom-search" oninput="anomRender()" type="text" placeholder="Ketik nama usaha / desa…" class="filter-input w-full bg-white/85 border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600">
                 </div>
             </div>
-            <div class="mt-3 flex items-center gap-3 flex-wrap">
-                <span id="anom-active-filters" class="text-xs text-white/85"></span>
-                <button id="anom-reset" onclick="anomResetFilters()" class="anom-chip hidden text-xs font-semibold text-indigo-900 hover:text-indigo-950 bg-indigo-50 border border-indigo-300 rounded-full px-3 py-1">Reset filter ✕</button>
-            </div>
+            <span id="anom-active-filters" class="hidden"></span>
+            <span id="anom-reset" class="hidden"></span>
         </div>
 
         <!-- ===== CARD 2: RINGKASAN (KPI + Chart) ===== -->
@@ -540,9 +542,9 @@
             <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-7xl border border-slate-200 my-2 flex flex-col">
                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 border-b border-slate-200">
                     <div class="flex items-center gap-3 flex-wrap">
-                        <button onclick="anomExportCSV()" class="anom-chip flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow-sm">
+                        <button onclick="anomExportExcel()" class="anom-chip flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow-sm">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                            Download CSV
+                            Download Excel
                         </button>
                         <div>
                             <h3 class="font-bold text-slate-800 text-lg leading-tight">Detail Kasus Anomali</h3>
@@ -903,7 +905,7 @@ function anomUpdateFilterBadge(n){
   const parts=anomFilterText();
   const box=document.getElementById('anom-active-filters');
   const btn=document.getElementById('anom-reset');
-  if(box) box.textContent = parts.length ? ('Filter aktif → '+parts.join('  •  ')+'  ('+n+' kasus)') : (n+' kasus ditampilkan');
+  if(box){ box.textContent=''; box.classList.add('hidden'); }
   if(btn) btn.classList.toggle('hidden', parts.length===0);
   // update keterangan di judul card + modal
   const info = parts.length ? ('Filter: '+parts.join(' • ')+'  ('+n+' kasus)') : ('Menampilkan seluruh data ('+n+' kasus)');
@@ -1107,17 +1109,22 @@ function anomCloseTableModal(){
   document.body.style.overflow='';
 }
 
-function anomExportCSV(){
+function anomExportExcel(){
   const rows=anomFilteredForTable();
   if(!rows.length){ alert('Tidak ada data untuk diekspor.'); return; }
-  const head=['Jenis','No','Nama','Anomali','Kecamatan','Desa','Email Petugas','Status','Link FASIH'];
-  const csv=[head.join(',')].concat(rows.map(r=>[
-    r.jenis, r.anomali_no, r.nama, r.anomali, r.kecamatan, r.desa, r.email,
-    r.is_resolved?'Sudah':'Belum', r.link_fasih
-  ].map(v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"').join(','))).join('\r\n');
-  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='anomali_terfilter.csv'; document.body.appendChild(a); a.click(); a.remove();
+  if(typeof XLSX==='undefined'){ alert('Library Excel belum siap, coba lagi sebentar.'); return; }
+  const head=['Jenis','No Anomali','Nama','Keterangan Anomali','Kecamatan','Desa','Email Petugas','Status','Link FASIH'];
+  const data=[head].concat(rows.map(r=>[
+    r.jenis, r.anomali_no, r.nama,
+    (()=>{ const m=(r.anomali||'').match(/\(([^)]+)\)/); return m?'('+m[1]+')':r.anomali||''; })(),
+    r.kecamatan, r.desa, r.email||'',
+    r.is_resolved?'Sudah':'Belum', r.link_fasih||''
+  ]));
+  const ws=XLSX.utils.aoa_to_sheet(data);
+  ws['!cols']=[{wch:10},{wch:8},{wch:28},{wch:40},{wch:14},{wch:16},{wch:28},{wch:8},{wch:60}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,'Anomali',ws);
+  XLSX.writeFile(wb,'anomali_terfilter.xlsx');
 }
 
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
@@ -1676,17 +1683,37 @@ function renderCharts(data){
 }
 
 // ===================== TABLE =====================
+let _dtSortCol='pct', _dtSortDir=-1;
+function detailSort(col){
+  if(_dtSortCol===col) _dtSortDir*=-1; else{ _dtSortCol=col; _dtSortDir=col==='pct'?-1:1; }
+  ['korwil','ppl','wilayah','open','draft','submit','reject','approve','total','pct'].forEach(c=>{
+    const el=document.getElementById('dsort-'+c);
+    if(el) el.textContent = c===_dtSortCol ? (_dtSortDir===1?'▲':'▼') : '';
+  });
+  const fd=window._lastDetailData; if(fd) renderTable(fd);
+}
 function renderTable(data){
+    window._lastDetailData=data;
     const tb=document.getElementById('data-table-body');
     document.getElementById('table-row-count').innerText=`${data.length} Desa / Wilayah`;
     if(data.length===0){ tb.innerHTML=`<tr><td colspan="11" class="text-center py-6 text-slate-400">Tidak ada data</td></tr>`; return; }
-    const sorted=[...data].sort((a,b)=>{ const pa=a.total>0?progDoc(a)/a.total:0, pb=b.total>0?progDoc(b)/b.total:0; return pa-pb; });
+    const sorted=[...data].sort((a,b)=>{
+      const pa=a.total>0?progDoc(a)/a.total:0, pb=b.total>0?progDoc(b)/b.total:0;
+      const v={
+        korwil:[a.korwil||'',b.korwil||''], ppl:[a.ppl||'',b.ppl||''], wilayah:[a.desa||'',b.desa||''],
+        open:[a.open,b.open], draft:[a.draft,b.draft], submit:[a.submit,b.submit],
+        reject:[a.reject,b.reject], approve:[a.approve,b.approve], total:[a.total,b.total], pct:[pa,pb]
+      }[_dtSortCol]||[pa,pb];
+      const cmp = typeof v[0]==='string' ? v[0].localeCompare(v[1]) : v[0]-v[1];
+      return cmp * _dtSortDir;
+    });
     let html='';
     sorted.forEach((it,idx)=>{
         const pd=progDoc(it); const pct=it.total>0?((pd/it.total)*100).toFixed(1):'0.0';
         const multi = it.pplCount>1 ? `<span class="ml-1 inline-block text-[9px] bg-indigo-100 text-indigo-700 px-1 rounded">${it.pplCount} PPL</span>` : '';
-        html+=`<tr class="hover:bg-slate-50">
-            <td class="p-3 pl-4 text-xs">${idx+1}</td>
+        const rowBg = idx%2===0 ? 'bg-white' : 'bg-indigo-50/40';
+        html+=`<tr class="${rowBg} hover:bg-indigo-50 transition-colors">
+            <td class="p-3 pl-4 text-xs text-slate-400">${idx+1}</td>
             <td class="p-3 text-xs"><b>${it.korwil}</b><br><span class="text-slate-400">PML: ${it.pml}</span></td>
             <td class="p-3 text-xs font-medium">${it.ppl}${multi}</td>
             <td class="p-3 text-xs">${it.kec}<br><span class="text-slate-400">${it.desa}</span></td>
