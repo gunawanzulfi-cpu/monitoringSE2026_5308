@@ -23,6 +23,9 @@
         .kpi-card{cursor:pointer; position:relative; outline:2px solid transparent; outline-offset:2px;}
         .kpi-card:hover{outline-color:#4f46e5;}                 /* indigo-400 saat hover */
         .kpi-card.anom-active{outline-color:#312e81; box-shadow:0 0 0 3px rgba(49,46,129,.25), 0 10px 22px -10px rgba(49,46,129,.35);} /* indigo-600 saat dipilih */
+        /* ====== KPI delta glow ====== */
+        .delta-up{color:#10b981; text-shadow:0 0 8px rgba(16,185,129,0.65), 0 0 16px rgba(16,185,129,0.3);}
+        .delta-dn{color:#f43f5e; text-shadow:0 0 6px rgba(244,63,94,0.5);}
         /* ====== ANOMALI: util kecil ====== */
         .anom-row{transition:background-color .12s ease;}
         .anom-row:hover{background:#eef2ff;}
@@ -39,7 +42,8 @@
         .anom-table tbody tr:nth-child(odd){background:#eef2ff;}   /* krem muda */
         .anom-table tbody tr:nth-child(even){background:#ffffff;}
         .anom-table tbody tr.anom-row:hover{background:#e0e7ff;}    /* amber-100 saat hover */
-        #view-anomali .kpi-card:hover{outline-color:#6366f1;}                    /* hover amber (anomali saja) */
+        #view-anomali .kpi-card{cursor:default;}
+        #view-anomali .kpi-card:hover{outline-color:transparent;}
         #view-anomali .kpi-card.anom-active{outline-color:#312e81; box-shadow:0 0 0 3px rgba(49,46,129,.30), 0 10px 22px -10px rgba(49,46,129,.45);}
         /* #3: sort header hover */
         .anom-thead th.cursor-pointer:hover{background:#1e1b4b;}
@@ -85,12 +89,12 @@
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
-    <section id="view-progres" class="space-y-5">
+    <main class="max-w-7xl mx-auto p-3 sm:p-4 lg:p-5 space-y-4">
+    <section id="view-progres" class="space-y-3">
 
         <!-- FILTERS -->
-        <div class="bg-indigo-900 rounded-xl shadow-lg border border-indigo-700 p-4 sm:p-6">
-            <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+        <div class="bg-indigo-900 rounded-xl shadow-lg border border-indigo-700 p-3 sm:p-4">
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-3 flex items-center gap-2">
                 <svg class="w-4 h-4 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
                 Filter Pemantauan Wilayah & Petugas
             </h2>
@@ -128,37 +132,37 @@
 
         <!-- KPI CARDS -->
         <div class="prog-kpi-wrap grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2.5">
-            <div class="kpi-card bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
+            <div class="kpi-card bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
                 <span class="text-[10px] font-bold text-slate-900 uppercase">Target Dok.</span>
                 <span id="kpi-target" class="kpi-num text-xl font-bold text-slate-900 mt-2">-</span>
                 <div class="text-[10px] text-slate-400 mt-1">Beban Alokasi</div>
             </div>
-            <div class="kpi-card bg-blue-50 p-4 rounded-xl border border-blue-200 shadow-xs flex flex-col justify-between">
+            <div class="kpi-card bg-blue-50 p-3 rounded-xl border border-blue-200 shadow-xs flex flex-col justify-between">
                 <span class="text-[10px] font-bold text-slate-900 uppercase">Open / Belum</span>
                 <span id="kpi-open" class="kpi-num text-xl font-bold text-blue-900 mt-2">-</span>
                 <div id="pct-open" class="text-[10px] text-blue-600 mt-1 font-medium">-</div>
             </div>
-            <div class="kpi-card bg-purple-50 p-4 rounded-xl border border-purple-200 shadow-xs flex flex-col justify-between">
+            <div class="kpi-card bg-purple-50 p-3 rounded-xl border border-purple-200 shadow-xs flex flex-col justify-between">
                 <span class="text-[10px] font-bold text-slate-900 uppercase">Draft</span>
                 <span id="kpi-draft" class="kpi-num text-xl font-bold text-purple-900 mt-2">-</span>
                 <div id="pct-draft" class="text-[10px] text-purple-600 mt-1 font-medium">-</div>
             </div>
-            <div class="kpi-card bg-amber-50 p-4 rounded-xl border border-amber-200 shadow-xs flex flex-col justify-between">
+            <div class="kpi-card bg-amber-50 p-3 rounded-xl border border-amber-200 shadow-xs flex flex-col justify-between">
                 <span class="text-[10px] font-bold text-slate-900 uppercase">Submitted</span>
                 <span id="kpi-submit" class="kpi-num text-xl font-bold text-amber-900 mt-2">-</span>
                 <div id="pct-submit" class="text-[10px] text-amber-600 mt-1 font-medium">-</div>
             </div>
-            <div class="kpi-card bg-red-50 p-4 rounded-xl border border-red-200 shadow-xs flex flex-col justify-between">
+            <div class="kpi-card bg-red-50 p-3 rounded-xl border border-red-200 shadow-xs flex flex-col justify-between">
                 <span class="text-[10px] font-bold text-slate-900 uppercase">Rejected</span>
                 <span id="kpi-reject" class="kpi-num text-xl font-bold text-red-900 mt-2">-</span>
                 <div id="pct-reject" class="text-[10px] text-red-600 mt-1 font-medium">-</div>
             </div>
-            <div class="kpi-card bg-emerald-50 p-4 rounded-xl border border-emerald-200 shadow-xs flex flex-col justify-between">
+            <div class="kpi-card bg-emerald-50 p-3 rounded-xl border border-emerald-200 shadow-xs flex flex-col justify-between">
                 <span class="text-[10px] font-bold text-slate-900 uppercase">Approved</span>
                 <span id="kpi-approve" class="kpi-num text-xl font-bold text-emerald-900 mt-2">-</span>
                 <div id="pct-approve" class="text-[10px] text-emerald-600 mt-1 font-medium">-</div>
             </div>
-            <div class="kpi-card col-span-2 sm:col-span-1 bg-indigo-50 p-4 rounded-xl border border-indigo-200 shadow-xs flex flex-col justify-between">
+            <div class="kpi-card col-span-2 sm:col-span-1 bg-indigo-50 p-3 rounded-xl border border-indigo-200 shadow-xs flex flex-col justify-between">
                 <span class="text-[10px] font-bold text-slate-900 uppercase">Progres Kerja</span>
                 <span id="kpi-progress" class="kpi-num text-xl font-bold text-indigo-900 mt-2">-</span>
                 <div class="w-full bg-indigo-200 rounded-full h-1.5 mt-2 overflow-hidden">
@@ -168,8 +172,8 @@
         </div>
 
         <!-- TREN HARIAN + TARGET (dimensi waktu) -->
-        <div class="bg-indigo-900 rounded-xl shadow-lg border border-indigo-700 p-4 sm:p-6">
-            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+        <div class="bg-indigo-900 rounded-xl shadow-lg border border-indigo-700 p-3 sm:p-4">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-3">
                 <div>
                     <h3 class="font-bold text-white text-base flex items-center gap-2">📈 Tren Harian Progres & Target
                         <span id="hist-sim-badge" class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 hidden">DATA SIMULASI (PREVIEW)</span>
@@ -183,30 +187,30 @@
                 </div>
             </div>
             <!-- Strip ringkasan: hari ini vs kemarin + status target -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                <div class="p-3 rounded-xl border border-slate-200 bg-slate-50/50">
-                    <div class="text-[10px] font-bold text-slate-900 uppercase">Progres Hari Ini</div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                <div class="kpi-card p-3 rounded-xl border border-indigo-200 bg-white">
+                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Progres Hari Ini</div>
                     <div class="flex items-baseline gap-2 mt-1">
-                        <span id="td-today" class="text-2xl font-extrabold text-indigo-700">-</span>
+                        <span id="td-today" class="kpi-num text-2xl font-extrabold text-indigo-800">-</span>
                         <span id="td-delta" class="text-xs font-bold">-</span>
                     </div>
-                    <div id="td-deltaabs" class="text-[10px] text-slate-700 mt-0.5">-</div>
+                    <div id="td-deltaabs" class="text-[10px] text-slate-500 mt-0.5">-</div>
                 </div>
-                <div class="p-3 rounded-xl border border-slate-200 bg-slate-50/50">
-                    <div class="text-[10px] font-bold text-slate-900 uppercase">Target Hari Ini</div>
+                <div class="kpi-card p-3 rounded-xl border border-indigo-200 bg-white">
+                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Target Hari Ini</div>
                     <div class="flex items-baseline gap-2 mt-1">
-                        <span id="td-target" class="text-2xl font-extrabold text-indigo-900">-</span>
+                        <span id="td-target" class="kpi-num text-2xl font-extrabold text-slate-800">-</span>
                         <span id="td-status" class="text-[10px] font-bold px-1.5 py-0.5 rounded">-</span>
                     </div>
-                    <div id="td-gap" class="text-[10px] text-slate-700 mt-0.5">-</div>
+                    <div id="td-gap" class="text-[10px] text-slate-500 mt-0.5">-</div>
                 </div>
-                <div class="p-3 rounded-xl border border-slate-200 bg-slate-50/50">
-                    <div class="text-[10px] font-bold text-slate-900 uppercase">Laju & Proyeksi</div>
+                <div class="kpi-card p-3 rounded-xl border border-indigo-200 bg-white">
+                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Laju & Proyeksi</div>
                     <div class="flex items-baseline gap-2 mt-1">
-                        <span id="td-rate" class="text-2xl font-extrabold text-emerald-700">-</span>
-                        <span class="text-[10px] text-slate-600">/hari (7hr)</span>
+                        <span id="td-rate" class="kpi-num text-2xl font-extrabold text-emerald-600">-</span>
+                        <span class="text-[10px] text-slate-400">/hari (7hr)</span>
                     </div>
-                    <div id="td-eta" class="text-[10px] text-slate-700 mt-0.5">-</div>
+                    <div id="td-eta" class="text-[10px] text-slate-500 mt-0.5">-</div>
                 </div>
             </div>
             <div class="relative h-64 sm:h-80">
@@ -215,8 +219,8 @@
         </div>
 
         <!-- ROW: GAUGE + RADAR KECAMATAN + RANKING (selevel) -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="bg-indigo-900 p-4 sm:p-6 rounded-xl border border-indigo-700 shadow-lg shadow-xs flex flex-col">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="bg-indigo-900 p-3 sm:p-4 rounded-xl border border-indigo-700 shadow-lg shadow-xs flex flex-col">
                 <div class="flex justify-between items-center gap-2">
                     <h3 class="font-bold text-white text-[15px] sm:text-base flex items-center gap-2 whitespace-nowrap"><span>⏱️</span><span>Gauge Capaian Total</span></h3>
                     <button onclick="openChartModal('gauge')" title="Perbesar & unduh" class="text-slate-400 hover:text-indigo-600 transition shrink-0 p-1">
@@ -232,7 +236,7 @@
                     </div>
                 </div>
             </div>
-            <div class="bg-indigo-900 p-4 sm:p-6 rounded-xl border border-indigo-700 shadow-lg shadow-xs flex flex-col">
+            <div class="bg-indigo-900 p-3 sm:p-4 rounded-xl border border-indigo-700 shadow-lg shadow-xs flex flex-col">
                 <div class="flex justify-between items-center gap-2">
                     <h3 class="font-bold text-white text-[15px] sm:text-base flex items-center gap-2 whitespace-nowrap"><span>🕸️</span><span>Radar per Kecamatan</span></h3>
                     <button onclick="openChartModal('radar')" title="Perbesar & unduh" class="text-slate-400 hover:text-indigo-600 transition shrink-0 p-1">
@@ -250,7 +254,7 @@
                     <canvas id="approveRadarChart"></canvas>
                 </div>
             </div>
-            <div class="bg-indigo-900 p-4 sm:p-6 rounded-xl border border-indigo-700 shadow-lg shadow-xs flex flex-col">
+            <div class="bg-indigo-900 p-3 sm:p-4 rounded-xl border border-indigo-700 shadow-lg shadow-xs flex flex-col">
                 <div class="flex justify-between items-center gap-2">
                     <h3 class="font-bold text-white text-[15px] sm:text-base flex items-center gap-2 whitespace-nowrap"><span>🏆</span><span>Peringkat Capaian</span></h3>
                     <button onclick="openChartModal('ranking')" title="Perbesar & unduh" class="text-slate-400 hover:text-indigo-600 transition shrink-0 p-1">
@@ -277,8 +281,8 @@
         </div>
 
         <!-- PPL SUMMARY CARDS -->
-        <div class="bg-indigo-900 rounded-xl shadow-lg border border-indigo-700 p-4 sm:p-6">
-            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4 border-b border-slate-100 pb-4">
+        <div class="bg-indigo-900 rounded-xl shadow-lg border border-indigo-700 p-3 sm:p-4">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-3 border-b border-slate-100 pb-4">
                 <div>
                     <h3 class="font-bold text-white text-base">Ringkasan Progress Total Per Orang (PPL Kumulatif)</h3>
                     <p class="text-xs text-indigo-200">Klik kartu untuk melihat rincian per Desa/SLS.</p>
@@ -304,9 +308,9 @@
         </div>
 
         <!-- STACKED + PIE -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="bg-indigo-900 p-4 sm:p-6 rounded-xl border border-indigo-700 shadow-lg shadow-xs lg:col-span-2">
-                <div class="flex justify-between items-center mb-4">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="bg-indigo-900 p-3 sm:p-4 rounded-xl border border-indigo-700 shadow-lg shadow-xs lg:col-span-2">
+                <div class="flex justify-between items-center mb-3">
                     <h3 class="font-bold text-white text-base">Grafik Progres Capaian Dokumen Per Desa (Filter Aktif)</h3>
                     <span class="text-xs text-slate-400">Top 15 Baris</span>
                 </div>
@@ -314,8 +318,8 @@
                     <canvas id="progressChart"></canvas>
                 </div>
             </div>
-            <div class="bg-indigo-900 p-4 sm:p-6 rounded-xl border border-indigo-700 shadow-lg shadow-xs">
-                <div class="flex justify-between items-center mb-4">
+            <div class="bg-indigo-900 p-3 sm:p-4 rounded-xl border border-indigo-700 shadow-lg shadow-xs">
+                <div class="flex justify-between items-center mb-3">
                     <h3 class="font-bold text-white text-base">Komposisi Status Dokumen</h3>
                     <span class="text-xs text-slate-400">Filter Aktif</span>
                 </div>
@@ -360,11 +364,11 @@
 
     </section>
     <!-- ============================ VIEW: ANOMALI ============================ -->
-    <section id="view-anomali" hidden class="anom-fade space-y-5">
+    <section id="view-anomali" hidden class="anom-fade space-y-3">
 
         <!-- ===== CARD 1: FILTER (samakan dgn filter Progres: 3 dropdown + search) ===== -->
-        <div class="anom-theme-card rounded-xl p-4 sm:p-6">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div class="anom-theme-card rounded-xl p-3 sm:p-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                 <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
                     Filter Anomali
@@ -375,7 +379,7 @@
                     <button data-jenis="keluarga" onclick="anomSetJenis('keluarga')" class="anom-jenisbtn anom-tabbtn px-3 py-1.5 rounded-md text-xs font-semibold text-indigo-900 hover:bg-indigo-200">Keluarga</button>
                 </div>
             </div>
-            <p id="anom-source-label" class="text-xs text-white/85 mb-4"></p>
+            <p id="anom-source-label" class="text-xs text-white/85 mb-3"></p>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                     <label class="block text-xs font-semibold text-white mb-1">Kecamatan</label>
@@ -401,8 +405,8 @@
         </div>
 
         <!-- ===== CARD 2: RINGKASAN (KPI + Chart) ===== -->
-        <div id="anom-summary-card" class="anom-theme-card rounded-xl p-4 sm:p-5">
-            <div class="flex items-start justify-between gap-3 mb-4">
+        <div id="anom-summary-card" class="anom-theme-card rounded-xl p-3 sm:p-4">
+            <div class="flex items-start justify-between gap-3 mb-3">
                 <div>
                     <h3 class="font-bold text-white text-base flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
@@ -418,14 +422,14 @@
                 </div>
             </div>
             <!-- SEKSI KPI (panel biru pembungkus, kotak KPI krem — gaya Progres) -->
-            <div class="anom-kpi-panel rounded-lg p-4">
+            <div class="anom-kpi-panel rounded-lg p-3">
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-                    <div class="kpi-card bg-indigo-50 p-4 rounded-xl border border-indigo-200 shadow-xs flex flex-col justify-between" data-kpi="total" onclick="anomKpiClick('total')"><span class="text-[10px] font-bold text-slate-500 uppercase">Total Anomali</span><span id="kpi-anom-total" class="kpi-num text-xl font-bold text-slate-900 mt-2">–</span></div>
-                    <div class="kpi-card bg-indigo-50 p-4 rounded-xl border border-indigo-200 shadow-xs flex flex-col justify-between" data-kpi="usaha" onclick="anomKpiClick('usaha')"><span class="text-[10px] font-bold text-indigo-600 uppercase">Usaha</span><span id="kpi-anom-usaha" class="kpi-num text-xl font-bold text-indigo-700 mt-2">–</span></div>
-                    <div class="kpi-card bg-indigo-50 p-4 rounded-xl border border-indigo-200 shadow-xs flex flex-col justify-between" data-kpi="keluarga" onclick="anomKpiClick('keluarga')"><span class="text-[10px] font-bold text-violet-600 uppercase">Keluarga</span><span id="kpi-anom-keluarga" class="kpi-num text-xl font-bold text-violet-700 mt-2">–</span></div>
-                    <div class="kpi-card bg-indigo-50 p-4 rounded-xl border border-indigo-200 shadow-xs flex flex-col justify-between" data-kpi="belum" onclick="anomKpiClick('belum')"><span class="text-[10px] font-bold text-red-600 uppercase">Belum TL</span><span id="kpi-anom-belum" class="kpi-num text-xl font-bold text-red-700 mt-2">–</span></div>
-                    <div class="kpi-card bg-indigo-50 p-4 rounded-xl border border-indigo-200 shadow-xs flex flex-col justify-between" data-kpi="sudah" onclick="anomKpiClick('sudah')"><span class="text-[10px] font-bold text-emerald-600 uppercase">Sudah TL</span><span id="kpi-anom-sudah" class="kpi-num text-xl font-bold text-emerald-700 mt-2">–</span></div>
-                    <div class="kpi-card bg-indigo-50 p-4 rounded-xl border border-indigo-200 shadow-xs flex flex-col justify-between" data-kpi="tanpa" onclick="anomKpiClick('tanpa')"><span class="text-[10px] font-bold text-indigo-200 uppercase">Tanpa Petugas</span><span id="kpi-anom-tanpa" class="kpi-num text-xl font-bold text-indigo-700 mt-2">–</span></div>
+                    <div class="kpi-card bg-indigo-50 p-3 rounded-xl border border-indigo-200 shadow-xs flex flex-col justify-between" data-kpi="total"><span class="text-[10px] font-bold text-slate-500 uppercase">Total Anomali</span><span id="kpi-anom-total" class="kpi-num text-xl font-bold text-slate-900 mt-2">–</span></div>
+                    <div class="kpi-card bg-indigo-50 p-3 rounded-xl border border-indigo-200 shadow-xs flex flex-col justify-between" data-kpi="usaha"><span class="text-[10px] font-bold text-indigo-600 uppercase">Usaha</span><span id="kpi-anom-usaha" class="kpi-num text-xl font-bold text-indigo-700 mt-2">–</span></div>
+                    <div class="kpi-card bg-indigo-50 p-3 rounded-xl border border-indigo-200 shadow-xs flex flex-col justify-between" data-kpi="keluarga"><span class="text-[10px] font-bold text-violet-600 uppercase">Keluarga</span><span id="kpi-anom-keluarga" class="kpi-num text-xl font-bold text-violet-700 mt-2">–</span></div>
+                    <div class="kpi-card bg-indigo-50 p-3 rounded-xl border border-indigo-200 shadow-xs flex flex-col justify-between" data-kpi="belum"><span class="text-[10px] font-bold text-red-600 uppercase">Belum TL</span><span id="kpi-anom-belum" class="kpi-num text-xl font-bold text-red-700 mt-2">–</span></div>
+                    <div class="kpi-card bg-indigo-50 p-3 rounded-xl border border-indigo-200 shadow-xs flex flex-col justify-between" data-kpi="sudah"><span class="text-[10px] font-bold text-emerald-600 uppercase">Sudah TL</span><span id="kpi-anom-sudah" class="kpi-num text-xl font-bold text-emerald-700 mt-2">–</span></div>
+                    <div class="kpi-card bg-indigo-50 p-3 rounded-xl border border-indigo-200 shadow-xs flex flex-col justify-between" data-kpi="tanpa"><span class="text-[10px] font-bold text-indigo-200 uppercase">Tanpa Petugas</span><span id="kpi-anom-tanpa" class="kpi-num text-xl font-bold text-indigo-700 mt-2">–</span></div>
                 </div>
             </div>
             <!-- PEMISAH -->
@@ -435,14 +439,14 @@
                 <div class="h-px flex-1 bg-white/40"></div>
             </div>
             <!-- SEKSI CHART: [Kecamatan] + [Jenis] -->
-            <div class="anom-inner-panel rounded-lg p-4">
+            <div class="anom-inner-panel rounded-lg p-3">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
                     <div class="bg-white border border-indigo-100 rounded-xl p-3">
                         <div class="flex items-center justify-between mb-2"><h4 class="font-bold text-indigo-900 text-sm">Anomali per Kecamatan</h4><span class="text-[10px] text-indigo-400">klik batang</span></div>
                         <div style="position:relative;height:300px"><canvas id="anom-chart-kec"></canvas></div>
                     </div>
                     <div class="bg-white border border-indigo-100 rounded-xl p-3">
-                        <div class="flex items-center justify-between mb-2"><h4 class="font-bold text-indigo-900 text-sm">Anomali per Jenis</h4><span class="text-[10px] text-indigo-400">klik batang</span></div>
+                        <div class="flex items-center justify-between mb-2"><h4 class="font-bold text-indigo-900 text-sm">Anomali per Jenis</h4></div>
                         <div style="position:relative;height:300px"><canvas id="anom-chart-jenis"></canvas></div>
                     </div>
                 </div>
@@ -450,8 +454,8 @@
         </div>
 
         <!-- ===== CARD 3: TABEL DETAIL ===== -->
-        <div class="anom-theme-card rounded-xl p-4 sm:p-5">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+        <div class="anom-theme-card rounded-xl p-3 sm:p-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3">
                 <div>
                     <h3 class="font-bold text-white text-base">Detail Kasus Anomali</h3>
                     <p class="text-xs text-white/85">Klik "Buka di FASIH" untuk menindaklanjuti tiap kasus</p>
@@ -633,7 +637,7 @@
                     <div id="modal-shared-note" style="display:none" class="mb-3 text-[11px] bg-orange-50 border border-orange-200 text-orange-700 rounded-lg px-3 py-2">
                         ⚠ Petugas ini berbagi desa dengan PPL lain. Untuk desa berbagi, angka adalah <b>perkiraan bagi rata</b> (CSV hanya mencatat total per desa, bukan per orang).
                     </div>
-                    <div id="modal-ppl-trend-box" class="mb-4 hidden">
+                    <div id="modal-ppl-trend-box" class="mb-3 hidden">
                         <div class="flex items-center justify-between mb-1">
                             <h4 class="text-xs font-bold text-slate-600 uppercase tracking-wide">📈 Tren Capaian Harian Petugas</h4>
                             <span id="modal-ppl-trend-delta" class="text-[11px] font-bold"></span>
@@ -716,7 +720,9 @@ function anomRankColors(values){
 function anomLabelWithCode(name){
   const rec = ANOM_ALL.find(r => r.anomali === name);
   const no = rec ? rec.anomali_no : null;
-  return (no!=null ? ('#'+no+' ') : '') + name;
+  const ket = name.match(/\(([^)]+)\)/);
+  const label = ket ? '('+ket[1]+')' : name;
+  return (no!=null ? ('#'+no+' ') : '') + label;
 }
 
 function switchView(v){
@@ -923,9 +929,7 @@ function anomRenderCharts(rows){
   const jLabels=aEntries.map(e=>shorten(anomLabelWithCode(e[0])));
   const jFull=aEntries.map(e=>anomLabelWithCode(e[0]));
   const jColors=aEntries.map(e=>anomColorFor(e[0]));
-  anomChartJenis = drawBar('anom-chart-jenis', anomChartJenis, jLabels, aEntries.map(e=>e[1]), jColors,
-    (label)=>{ const idx=jLabels.indexOf(label); const name=idx>=0?aEntries[idx][0]:null; const sel=document.getElementById('anom-filter-anomali'); const val=name||'all'; sel.value=(sel.value===val?'all':val); anomRender(); },
-    jFull);
+  anomChartJenis = drawBar('anom-chart-jenis', anomChartJenis, jLabels, aEntries.map(e=>e[1]), jColors, null, jFull);
 }
 function drawBar(canvasId, existing, labels, data, color, onClick, fullLabels){
   const ctx=document.getElementById(canvasId); if(!ctx) return existing;
@@ -1038,7 +1042,8 @@ function anomRowHTML(rows){
     const aksi = r.link_fasih
       ? `<a href="${esc(r.link_fasih)}" target="_blank" rel="noopener" class="anom-chip inline-flex items-center gap-1 bg-indigo-700 hover:bg-indigo-600 text-white text-[10px] font-semibold px-2 py-1 rounded-md">Buka di FASIH ↗</a>`
       : '<span class="text-slate-300 text-xs">—</span>';
-    const anomLabel = (r.anomali_no!=null?('#'+r.anomali_no+' '):'')+esc(r.anomali||'-');
+    const _aKet = (r.anomali||'').match(/\(([^)]+)\)/);
+    const anomLabel = (r.anomali_no!=null?('#'+r.anomali_no+' '):'') + esc(_aKet ? '('+_aKet[1]+')' : (r.anomali||'-'));
     return `<tr class="anom-row">
       <td class="px-2 py-2 pl-3 text-slate-400">${i+1}</td>
       <td class="px-2 py-2">${jenis}</td>
@@ -1323,7 +1328,7 @@ function renderTrend(){
     if(prev){
         const pv=+sc.val(prev); const dd=+(curPct-pv).toFixed(2); const up=dd>=0;
         dEl.innerHTML=`${up?'▲':'▼'} ${Math.abs(dd).toFixed(2)}%`;
-        dEl.className='text-xs font-bold '+(up?'text-emerald-600':'text-rose-600');
+        dEl.className='text-xs font-bold '+(up?'delta-up':'delta-dn');
         daEl.innerText=`vs ${fmtTgl(prev.date)} (${pv.toFixed(1)}%)`;
     } else { dEl.innerHTML='—'; daEl.innerText='belum ada pembanding'; }
     // target hari ini (sama rata)
@@ -1358,7 +1363,7 @@ function buildTrendChartCfg(ctx, big, noAnim){
     const target=Hs.map(h=>{ const t=targetAt(h.date); return t==null?null:+t.toFixed(1); });
     const actualLabel = sc.scope==='total' ? 'Capaian Aktual' : 'Capaian '+scopeLabelText(sc);
     const grad=ctx.createLinearGradient(0,0,0,300);
-    grad.addColorStop(0,'rgba(49,46,129,0.25)'); grad.addColorStop(1,'rgba(49,46,129,0.01)');
+    grad.addColorStop(0,'rgba(49,46,129,0.70)'); grad.addColorStop(1,'rgba(49,46,129,0.08)');
     return { type:'line',
         data:{ labels, datasets:[
             { label:actualLabel, data:actual, borderColor:'#312e81', backgroundColor:grad, borderWidth:2.5, tension:0.3, fill:true, pointRadius:3, pointBackgroundColor:'#312e81' },
@@ -1543,8 +1548,8 @@ function renderPPLSummary(data){
     keys.forEach(name=>{
         const gr=g[name]; const pd=progDoc(gr); const pct=gr.total>0?((pd/gr.total)*100).toFixed(1):'0.0';
         let cc='bg-white border-slate-200', pc='bg-slate-400';
-        if(parseFloat(pct)>=75){cc='bg-emerald-50/50 border-emerald-200';pc='bg-emerald-600';}
-        else if(parseFloat(pct)>0){cc='bg-amber-50/50 border-amber-200';pc='bg-amber-500';}
+        if(parseFloat(pct)>=75){cc='bg-emerald-50/90 border-emerald-200';pc='bg-emerald-600';}
+        else if(parseFloat(pct)>0){cc='bg-amber-50/90 border-amber-200';pc='bg-amber-500';}
         const sharedBadge = gr.shared ? `<span class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 shrink-0" title="Petugas berbagi desa dengan PPL lain. Angka = perkiraan bagi rata, bukan data per orang.">⚠ Berbagi desa</span>` : '';
         cont.innerHTML+=`<div onclick="openPplDetail('${name.replace(/'/g,"\\'")}')" class="p-4 rounded-xl border ${cc} shadow-xs flex flex-col justify-between space-y-3 cursor-pointer hover:scale-[1.01] hover:shadow-md transition duration-200">
             <div>
@@ -1552,13 +1557,13 @@ function renderPPLSummary(data){
                     <h4 class="font-bold text-slate-900 text-xs sm:text-sm truncate max-w-[60%]">${name}</h4>
                     <div class="flex items-center gap-1 shrink-0">${sharedBadge}<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 whitespace-nowrap">Prog: ${pd} Target: ${gr.total}</span><span class="text-xs font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">${pct}%</span></div>
                 </div>
-                <div class="mt-1.5 space-y-0.5 border-b border-slate-200 pb-2 text-[10px] text-slate-900">
+                <div class="mt-1.5 space-y-0.5 border-b border-slate-200 pb-2 text-[11px] font-semibold text-slate-800">
                     <p class="truncate"><b>Korwil:</b> ${gr.korwil.join(', ')}</p>
                     <p class="truncate"><b>PML:</b> ${gr.pml.join(', ')}</p>
                 </div>
-                <p class="text-[10px] text-slate-900 truncate mt-1.5"><b>Wilayah:</b> ${gr.desa.join(', ')}</p>
+                <p class="text-[11px] font-semibold text-slate-800 truncate mt-1.5"><b>Wilayah:</b> ${gr.desa.join(', ')}</p>
             </div>
-            <div class="grid grid-cols-5 text-center text-[10px] gap-1 bg-slate-100/50 p-1.5 rounded-lg text-slate-600 font-medium">
+            <div class="grid grid-cols-5 text-center text-[10px] gap-1 bg-white p-1.5 rounded-lg text-slate-600 font-medium border border-slate-100">
                 <div><div class="text-blue-600">${gr.open}</div>Op</div>
                 <div><div class="text-purple-600">${gr.draft}</div>Dr</div>
                 <div><div class="text-amber-600">${gr.submit}</div>Sub</div>
@@ -1566,7 +1571,7 @@ function renderPPLSummary(data){
                 <div><div class="text-emerald-600">${gr.approve}</div>App</div>
             </div>
             <div class="space-y-1">
-                <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden"><div class="${pc} h-1.5 rounded-full" style="width:${pct}%"></div></div>
+                <div class="w-full bg-white rounded-full h-1.5 overflow-hidden border border-slate-200"><div class="${pc} h-1.5 rounded-full" style="width:${pct}%"></div></div>
                 
             </div>
         </div>`;
@@ -1630,7 +1635,7 @@ function renderPplTrend(name){
     } else if(noteEl){ noteEl.innerText=''; }
     const ctx=document.getElementById('modalPplTrendChart').getContext('2d');
     const grad=ctx.createLinearGradient(0,0,0,200);
-    grad.addColorStop(0,'rgba(49,46,129,0.25)'); grad.addColorStop(1,'rgba(49,46,129,0.01)');
+    grad.addColorStop(0,'rgba(49,46,129,0.70)'); grad.addColorStop(1,'rgba(49,46,129,0.08)');
     window.__pplTrendRef=new Chart(ctx,{ type:'line',
         data:{ labels, datasets:[
             { label:'Capaian PPL', data:series, borderColor:'#312e81', backgroundColor:grad, borderWidth:2.5, tension:0.3, fill:true, pointRadius:2.5, pointBackgroundColor:'#312e81' },
