@@ -27,6 +27,8 @@
         /* ====== Filter input hover ====== */
         .filter-input{transition:transform .15s ease, box-shadow .15s ease;}
         .filter-input:hover{transform:translateY(-2px); box-shadow:0 4px 12px -2px rgba(49,46,129,0.30);}
+        /* box filter -> putih + outline biru sesuai tema */
+        .filter-input{ background:#ffffff !important; border-color:#6366f1 !important; }
         /* ====== KPI delta glow ====== */
         .delta-up{color:#15803d; background:#dcfce7; padding:2px 6px; border-radius:5px; font-size:11px;}
         .delta-dn{color:#b91c1c; background:#fee2e2; padding:2px 6px; border-radius:5px; font-size:11px;}
@@ -36,6 +38,10 @@
         .anom-chip{transition:transform .12s ease, box-shadow .12s ease;}
         .anom-chip:hover{transform:translateY(-1px);}
         .anom-tabbtn{transition:all .15s ease;}
+        /* toggle Kumulatif/Harian pada tren */
+        .trendmode-wrap{ display:inline-flex; gap:2px; background:#eef2ff; border-radius:8px; padding:3px; }
+        .trendmode-btn, .ppltrendmode-btn{ font-size:11px; font-weight:600; padding:3px 10px; border-radius:6px; color:#4f46e5; cursor:pointer; transition:all .15s ease; white-space:nowrap; border:0; background:transparent; }
+        .trendmode-btn.active, .ppltrendmode-btn.active{ background:#ffffff; color:#3730a3; box-shadow:0 1px 2px rgba(0,0,0,.10); }
         .anom-fade{animation:anomFade .25s ease;}
         @keyframes anomFade{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;}}
         /* ====== TEMA #312e81 (card coklat/amber gelap) ====== */
@@ -58,9 +64,32 @@
         /* kontainer chart & strip kecil tetap terang supaya isi terbaca */
         #view-progres .bg-slate-50{background:#f8fafc;}
         /* area chart (parent canvas) -> panel putih supaya sumbu & label terbaca */
-        #view-progres canvas{background:rgba(255,255,255,0.85); border-radius:.5rem;}
+        #view-progres canvas{background:#ffffff; border:1px solid #6366f1; border-radius:.5rem;}
+        #view-anomali canvas{background:#ffffff; border:1px solid #6366f1; border-radius:.5rem;}
         /* strip "Progres Hari Ini" dll & kartu PPL -> panel putih + teks gelap */
         #view-progres .bg-slate-50/50{background:#ffffff !important;}
+        /* ===== RECOLOR KARTU: indigo-900 -> indigo-100 (header & modal tetap gelap) ===== */
+        #view-progres .bg-indigo-900,
+        .anom-theme-card,
+        .anom-kpi-panel,
+        #view-progres .prog-kpi-wrap{ background:#e0e7ff !important; border-color:#a5b4fc !important; box-shadow:0 8px 20px -12px rgba(49,46,129,.30) !important; }
+        #view-progres .bg-indigo-900 .text-white,
+        .anom-theme-card .text-white{ color:#312e81 !important; }
+        #view-progres .bg-indigo-900 .text-indigo-200, .anom-theme-card .text-indigo-200,
+        #view-progres .bg-indigo-900 .text-indigo-300, .anom-theme-card .text-indigo-300{ color:#4f46e5 !important; }
+        #view-progres .bg-indigo-900 [class~="text-white/85"], .anom-theme-card [class~="text-white/85"],
+        #view-progres .bg-indigo-900 [class~="text-white/70"], .anom-theme-card [class~="text-white/70"]{ color:#4338ca !important; }
+        #view-progres .bg-indigo-900 .text-slate-400, .anom-theme-card .text-slate-400{ color:#64748b !important; }
+        /* tombol/badge yang punya background sendiri tetap putih */
+        #view-progres .bg-indigo-900 .text-white[class*="bg-"], .anom-theme-card .text-white[class*="bg-"]{ color:#ffffff !important; }
+        /* header tabel anomali tetap gelap -> panah sort tetap terang */
+        .anom-theme-card .anom-thead [class*="text-indigo"]{ color:#c7d2fe !important; }
+        /* garis pemisah "Visualisasi" agar terlihat di kartu terang */
+        .anom-theme-card [class~="bg-white/40"]{ background:#a5b4fc !important; }
+        /* ===== #1: hilangkan box pembungkus KPI anomali (border + padding) ===== */
+        .anom-kpi-panel{ background:transparent !important; border:0 !important; padding:0 !important; box-shadow:none !important; }
+        /* ===== #2: area plot chart -> putih + outline biru (KARTU & kotak filter tetap indigo-100) ===== */
+        /* (warna putih+outline ada pada elemen <canvas> di atas; kartu tidak diubah) */
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
@@ -80,8 +109,8 @@
                 </div>
             </div>
             <div class="flex items-center gap-1.5 bg-indigo-800/60 rounded-xl p-1.5 mx-2 shrink-0">
-                <button id="tabbtn-progres" onclick="switchView('progres')" class="anom-tabbtn px-5 py-2.5 rounded-lg text-base font-bold bg-white text-indigo-800 shadow-md scale-105">Progres</button>
-                <button id="tabbtn-anomali" onclick="switchView('anomali')" class="anom-tabbtn px-4 py-2 rounded-lg text-sm font-semibold text-indigo-100 hover:bg-indigo-700/60 scale-95">Anomali</button>
+                <button id="tabbtn-progres" onclick="switchView('progres')" class="anom-tabbtn px-6 py-2 rounded-md text-xs sm:text-sm font-semibold bg-white text-indigo-800 shadow-sm">Progres</button>
+                <button id="tabbtn-anomali" onclick="switchView('anomali')" class="anom-tabbtn px-6 py-2 rounded-md text-xs sm:text-sm font-semibold text-indigo-100 hover:bg-indigo-700/60">Anomali</button>
             </div>
             <div class="flex flex-row items-center gap-2 sm:gap-4 shrink-0 justify-end">
                 <div class="text-right">
@@ -93,7 +122,7 @@
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto p-3 sm:p-4 lg:p-5 space-y-4">
+    <main class="max-w-7xl w-full mx-auto p-3 sm:p-4 lg:p-5 space-y-4">
     <section id="view-progres" class="space-y-3">
 
         <!-- FILTERS -->
@@ -105,25 +134,25 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                     <label class="block text-xs font-semibold text-white mb-1">Koordinator Wilayah (Korwil)</label>
-                    <select id="filter-korwil" onchange="onFilterChange('filter-korwil')" class="filter-input w-full bg-white/85 border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600">
+                    <select id="filter-korwil" onchange="onFilterChange('filter-korwil')" class="filter-input w-full bg-amber-50/90 border border-amber-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600">
                         <option value="all">Semua Korwil</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-white mb-1">Pengawas Lapangan (PML)</label>
-                    <select id="filter-pml" onchange="onFilterChange('filter-pml')" class="filter-input w-full bg-white/85 border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600">
+                    <select id="filter-pml" onchange="onFilterChange('filter-pml')" class="filter-input w-full bg-amber-50/90 border border-amber-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600">
                         <option value="all">Semua PML</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-white mb-1">Kecamatan</label>
-                    <select id="filter-kecamatan" onchange="onFilterChange('filter-kecamatan')" class="filter-input w-full bg-white/85 border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600">
+                    <select id="filter-kecamatan" onchange="onFilterChange('filter-kecamatan')" class="filter-input w-full bg-amber-50/90 border border-amber-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600">
                         <option value="all">Semua Kecamatan</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-white mb-1">Cari Petugas Pencacah (PPL)</label>
-                    <input type="text" id="search-ppl" oninput="onSearchInput()" placeholder="Ketik nama PPL..." class="filter-input w-full bg-white/85 border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600">
+                    <input type="text" id="search-ppl" oninput="onSearchInput()" placeholder="Ketik nama PPL..." class="filter-input w-full bg-amber-50/90 border border-amber-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600">
                 </div>
             </div>
             <div id="kecamatan-drilldown-container" class="mt-6 pt-6 border-t border-slate-100 hidden">
@@ -136,7 +165,7 @@
 
         <!-- KPI CARDS -->
         <div class="prog-kpi-wrap grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2.5">
-            <div class="kpi-card bg-white/75 p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
+            <div class="kpi-card bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
                 <span class="text-[10px] font-bold text-slate-900 uppercase">Target Dok.</span>
                 <span id="kpi-target" class="kpi-num text-xl font-bold text-slate-900 mt-2">-</span>
                 <div class="text-[10px] text-slate-400 mt-1">Beban Alokasi</div>
@@ -342,7 +371,7 @@
                 </div>
                 <span id="table-row-count" class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-1 rounded-full">0 Petugas / Tugas</span>
             </div>
-            <div class="overflow-auto custom-scrollbar" style="max-height:560px">
+            <div id="capaian-scroll" class="overflow-auto custom-scrollbar" style="max-height:65vh">
                 <table class="w-full text-left border-collapse text-sm">
                     <thead class="sticky top-0 z-10">
                         <tr class="bg-indigo-950 text-indigo-100 font-semibold border-b border-indigo-800 text-xs uppercase" id="detail-table-head">
@@ -376,7 +405,7 @@
                 <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2 flex-wrap">
                     <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
                     Filter Anomali
-                    <span id="anom-source-label" class="text-xs font-normal normal-case tracking-normal text-white/70"></span>
+                    <span id="anom-source-label" class="text-sm sm:text-[15px] font-bold normal-case tracking-normal text-indigo-800"></span>
                 </h2>
                 <div class="flex items-center gap-1 bg-indigo-50 rounded-lg p-0.5 shrink-0 shadow-sm">
                     <button data-jenis="semua"    onclick="anomSetJenis('semua')"    class="anom-jenisbtn anom-tabbtn px-3 py-0.5 rounded-md text-xs font-semibold bg-indigo-700 text-white shadow-sm">Semua</button>
@@ -387,19 +416,19 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                     <label class="block text-xs font-semibold text-white mb-1">Kecamatan</label>
-                    <select id="anom-filter-kec" onchange="anomOnKecChange()" class="filter-input w-full bg-white/85 border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600"><option value="all">Semua Kecamatan</option></select>
+                    <select id="anom-filter-kec" onchange="anomOnKecChange()" class="filter-input w-full bg-amber-50/90 border border-amber-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600"><option value="all">Semua Kecamatan</option></select>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-white mb-1">Desa/Kelurahan</label>
-                    <select id="anom-filter-desa" onchange="anomRender()" class="filter-input w-full bg-white/85 border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600"><option value="all">Semua Desa</option></select>
+                    <select id="anom-filter-desa" onchange="anomRender()" class="filter-input w-full bg-amber-50/90 border border-amber-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600"><option value="all">Semua Desa</option></select>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-white mb-1">Jenis Anomali</label>
-                    <select id="anom-filter-anomali" onchange="anomRender()" class="filter-input w-full bg-white/85 border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600"><option value="all">Semua Jenis</option></select>
+                    <select id="anom-filter-anomali" onchange="anomRender()" class="filter-input w-full bg-amber-50/90 border border-amber-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600"><option value="all">Semua Jenis</option></select>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-white mb-1">Cari Usaha/Desa</label>
-                    <input id="anom-search" oninput="anomRender()" type="text" placeholder="Ketik nama usaha / desa…" class="filter-input w-full bg-white/85 border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600">
+                    <input id="anom-search" oninput="anomRender()" type="text" placeholder="Ketik nama usaha / desa…" class="filter-input w-full bg-amber-50/90 border border-amber-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-600">
                 </div>
             </div>
             <span id="anom-active-filters" class="hidden"></span>
@@ -434,14 +463,8 @@
                     <div class="kpi-card bg-indigo-50 p-3 rounded-xl border border-indigo-200 shadow-xs flex flex-col justify-between" data-kpi="tanpa"><span class="text-[10px] font-bold text-indigo-200 uppercase">Tanpa Petugas</span><span id="kpi-anom-tanpa" class="kpi-num text-xl font-bold text-indigo-700 mt-2">–</span></div>
                 </div>
             </div>
-            <!-- PEMISAH -->
-            <div class="flex items-center gap-3 my-4">
-                <div class="h-px flex-1 bg-white/40"></div>
-                <span class="text-[11px] font-bold text-white uppercase tracking-widest">Visualisasi</span>
-                <div class="h-px flex-1 bg-white/40"></div>
-            </div>
             <!-- SEKSI CHART: [Kecamatan] + [Jenis] -->
-            <div class="anom-inner-panel rounded-lg p-3">
+            <div class="anom-inner-panel rounded-lg p-3 mt-3">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
                     <div class="bg-white border border-indigo-100 rounded-xl p-3">
                         <div class="flex items-center justify-between mb-2"><h4 class="font-bold text-indigo-900 text-sm">Anomali per Kecamatan</h4><span class="text-[10px] text-indigo-400">klik batang</span></div>
@@ -476,19 +499,19 @@
                 </div>
             </div>
             <div class="anom-inner-panel rounded-lg overflow-hidden">
-                <div class="overflow-auto custom-scrollbar" style="max-height:560px">
-                    <table class="w-full text-left border-collapse text-xs anom-table">
+                <div id="anom-scroll" class="overflow-auto custom-scrollbar" style="max-height:calc(100vh - 300px)">
+                    <table class="w-full text-left border-collapse text-xs anom-table table-fixed">
                         <thead class="sticky top-0 z-10">
                             <tr class="anom-thead text-xs uppercase tracking-wide">
-                                <th class="py-2 px-2 pl-3 cursor-pointer select-none" onclick="anomSortBy('no')">No <span class="anom-sort-arrow" data-sortkey="no"></span></th>
-                                <th class="py-2 px-2 cursor-pointer select-none" onclick="anomSortBy('jenis')">Jenis <span class="anom-sort-arrow" data-sortkey="jenis"></span></th>
-                                <th class="py-2 px-2 cursor-pointer select-none" onclick="anomSortBy('nama')">Nama <span class="anom-sort-arrow" data-sortkey="nama"></span></th>
-                                <th class="py-2 px-2 cursor-pointer select-none" onclick="anomSortBy('anomali')">Anomali <span class="anom-sort-arrow" data-sortkey="anomali"></span></th>
-                                <th class="py-2 px-2 cursor-pointer select-none" onclick="anomSortBy('kecamatan')">Kecamatan <span class="anom-sort-arrow" data-sortkey="kecamatan"></span></th>
-                                <th class="py-2 px-2 cursor-pointer select-none" onclick="anomSortBy('desa')">Desa <span class="anom-sort-arrow" data-sortkey="desa"></span></th>
-                                <th class="py-2 px-2 cursor-pointer select-none" onclick="anomSortBy('petugas')">Petugas (email) <span class="anom-sort-arrow" data-sortkey="petugas"></span></th>
-                                <th class="py-2 px-2 text-center cursor-pointer select-none" onclick="anomSortBy('status')">Status TL <span class="anom-sort-arrow" data-sortkey="status"></span></th>
-                                <th class="py-2 px-2 pr-3 text-center">Aksi</th>
+                                <th class="py-2 px-2 pl-3 cursor-pointer select-none" style="width:3%" onclick="anomSortBy('no')">No <span class="anom-sort-arrow" data-sortkey="no"></span></th>
+                                <th class="py-2 px-2 cursor-pointer select-none" style="width:7%" onclick="anomSortBy('jenis')">Jenis <span class="anom-sort-arrow" data-sortkey="jenis"></span></th>
+                                <th class="py-2 px-2 cursor-pointer select-none" style="width:19%" onclick="anomSortBy('nama')">Nama <span class="anom-sort-arrow" data-sortkey="nama"></span></th>
+                                <th class="py-2 px-2 cursor-pointer select-none" style="width:18%" onclick="anomSortBy('anomali')">Anomali <span class="anom-sort-arrow" data-sortkey="anomali"></span></th>
+                                <th class="py-2 px-2 cursor-pointer select-none" style="width:10%" onclick="anomSortBy('kecamatan')">Kecamatan <span class="anom-sort-arrow" data-sortkey="kecamatan"></span></th>
+                                <th class="py-2 px-2 cursor-pointer select-none" style="width:10%" onclick="anomSortBy('desa')">Desa <span class="anom-sort-arrow" data-sortkey="desa"></span></th>
+                                <th class="py-2 px-2 cursor-pointer select-none" style="width:15%" onclick="anomSortBy('petugas')">Petugas (email) <span class="anom-sort-arrow" data-sortkey="petugas"></span></th>
+                                <th class="py-2 px-2 text-center cursor-pointer select-none" style="width:9%" onclick="anomSortBy('status')">Status TL <span class="anom-sort-arrow" data-sortkey="status"></span></th>
+                                <th class="py-2 px-2 pr-3 text-center" style="width:9%">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="anom-table-body" class="text-indigo-950"><tr><td colspan="9" class="text-center py-8 text-indigo-200">Memuat data anomali…</td></tr></tbody>
@@ -518,15 +541,15 @@
                     </div>
                 </div>
                 <div id="anom-expand-body" class="p-5">
-                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-5">
-                        <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-200"><span class="text-[10px] font-bold text-slate-500 uppercase">Total</span><div id="kpi-x-total" class="text-2xl font-extrabold text-slate-900 mt-1">–</div></div>
-                        <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-200"><span class="text-[10px] font-bold text-indigo-600 uppercase">Usaha</span><div id="kpi-x-usaha" class="text-2xl font-extrabold text-indigo-700 mt-1">–</div></div>
-                        <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-200"><span class="text-[10px] font-bold text-violet-600 uppercase">Keluarga</span><div id="kpi-x-keluarga" class="text-2xl font-extrabold text-violet-700 mt-1">–</div></div>
-                        <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-200"><span class="text-[10px] font-bold text-red-600 uppercase">Belum TL</span><div id="kpi-x-belum" class="text-2xl font-extrabold text-red-700 mt-1">–</div></div>
-                        <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-200"><span class="text-[10px] font-bold text-emerald-600 uppercase">Sudah TL</span><div id="kpi-x-sudah" class="text-2xl font-extrabold text-emerald-700 mt-1">–</div></div>
-                        <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-200"><span class="text-[10px] font-bold text-indigo-200 uppercase">Tanpa Petugas</span><div id="kpi-x-tanpa" class="text-2xl font-extrabold text-indigo-700 mt-1">–</div></div>
+                    <div class="grid grid-cols-3 sm:grid-cols-6 gap-2.5 mb-5">
+                        <div class="bg-indigo-50 p-2.5 rounded-lg border border-indigo-200"><span class="text-[9px] font-bold text-slate-500 uppercase">Total</span><div id="kpi-x-total" class="text-lg font-extrabold text-slate-900 mt-0.5">–</div></div>
+                        <div class="bg-indigo-50 p-2.5 rounded-lg border border-indigo-200"><span class="text-[9px] font-bold text-indigo-600 uppercase">Usaha</span><div id="kpi-x-usaha" class="text-lg font-extrabold text-indigo-700 mt-0.5">–</div></div>
+                        <div class="bg-indigo-50 p-2.5 rounded-lg border border-indigo-200"><span class="text-[9px] font-bold text-violet-600 uppercase">Keluarga</span><div id="kpi-x-keluarga" class="text-lg font-extrabold text-violet-700 mt-0.5">–</div></div>
+                        <div class="bg-indigo-50 p-2.5 rounded-lg border border-indigo-200"><span class="text-[9px] font-bold text-red-600 uppercase">Belum TL</span><div id="kpi-x-belum" class="text-lg font-extrabold text-red-700 mt-0.5">–</div></div>
+                        <div class="bg-indigo-50 p-2.5 rounded-lg border border-indigo-200"><span class="text-[9px] font-bold text-emerald-600 uppercase">Sudah TL</span><div id="kpi-x-sudah" class="text-lg font-extrabold text-emerald-700 mt-0.5">–</div></div>
+                        <div class="bg-indigo-50 p-2.5 rounded-lg border border-indigo-200"><span class="text-[9px] font-bold text-indigo-400 uppercase">Tanpa Petugas</span><div id="kpi-x-tanpa" class="text-lg font-extrabold text-indigo-700 mt-0.5">–</div></div>
                     </div>
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
                         <div class="border border-slate-100 rounded-xl p-3"><h4 class="font-bold text-slate-700 text-sm mb-2">Anomali per Kecamatan</h4><div style="position:relative;height:320px"><canvas id="anom-xchart-kec"></canvas></div></div>
 
                         <div class="border border-slate-100 rounded-xl p-3"><h4 class="font-bold text-slate-700 text-sm mb-2">Anomali per Jenis</h4><div style="position:relative;height:320px"><canvas id="anom-xchart-jenis"></canvas></div></div>
@@ -538,9 +561,9 @@
 
     <!-- ===== MODAL TABEL FULLSCREEN ===== -->
     <div id="anom-table-modal" class="fixed inset-0 z-[9991] hidden overflow-y-auto">
-        <div class="flex min-h-full items-stretch justify-center p-3 sm:p-5 bg-slate-900/60" onclick="if(event.target===this)anomCloseTableModal()">
-            <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-7xl border border-slate-200 my-2 flex flex-col">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 border-b border-slate-200">
+        <div class="flex min-h-full items-start justify-center p-3 sm:p-5 bg-slate-900/60" onclick="if(event.target===this)anomCloseTableModal()">
+            <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-7xl border border-slate-200 my-2 flex flex-col max-h-[calc(100vh-1.5rem)]">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 border-b border-slate-200 shrink-0">
                     <div class="flex items-center gap-3 flex-wrap">
                         <button onclick="anomExportExcel()" class="anom-chip flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow-sm">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
@@ -562,19 +585,19 @@
                         </button>
                     </div>
                 </div>
-                <div class="overflow-auto custom-scrollbar flex-1" style="max-height:80vh">
-                    <table class="w-full text-left border-collapse text-xs anom-table">
+                <div class="overflow-auto custom-scrollbar flex-1 min-h-0">
+                    <table class="w-full text-left border-collapse text-xs anom-table table-fixed">
                         <thead class="sticky top-0 z-10">
                             <tr class="anom-thead text-xs uppercase tracking-wide">
-                                <th class="py-2 px-2 pl-3 cursor-pointer select-none" onclick="anomSortBy('no')">No <span class="anom-sort-arrow" data-sortkey="no"></span></th>
-                                <th class="py-2 px-2 cursor-pointer select-none" onclick="anomSortBy('jenis')">Jenis <span class="anom-sort-arrow" data-sortkey="jenis"></span></th>
-                                <th class="py-2 px-2 cursor-pointer select-none" onclick="anomSortBy('nama')">Nama <span class="anom-sort-arrow" data-sortkey="nama"></span></th>
-                                <th class="py-2 px-2 cursor-pointer select-none" onclick="anomSortBy('anomali')">Anomali <span class="anom-sort-arrow" data-sortkey="anomali"></span></th>
-                                <th class="py-2 px-2 cursor-pointer select-none" onclick="anomSortBy('kecamatan')">Kecamatan <span class="anom-sort-arrow" data-sortkey="kecamatan"></span></th>
-                                <th class="py-2 px-2 cursor-pointer select-none" onclick="anomSortBy('desa')">Desa <span class="anom-sort-arrow" data-sortkey="desa"></span></th>
-                                <th class="py-2 px-2 cursor-pointer select-none" onclick="anomSortBy('petugas')">Petugas (email) <span class="anom-sort-arrow" data-sortkey="petugas"></span></th>
-                                <th class="py-2 px-2 text-center cursor-pointer select-none" onclick="anomSortBy('status')">Status TL <span class="anom-sort-arrow" data-sortkey="status"></span></th>
-                                <th class="py-2 px-2 pr-3 text-center">Aksi</th>
+                                <th class="py-2 px-2 pl-3 cursor-pointer select-none" style="width:3%" onclick="anomSortBy('no')">No <span class="anom-sort-arrow" data-sortkey="no"></span></th>
+                                <th class="py-2 px-2 cursor-pointer select-none" style="width:7%" onclick="anomSortBy('jenis')">Jenis <span class="anom-sort-arrow" data-sortkey="jenis"></span></th>
+                                <th class="py-2 px-2 cursor-pointer select-none" style="width:19%" onclick="anomSortBy('nama')">Nama <span class="anom-sort-arrow" data-sortkey="nama"></span></th>
+                                <th class="py-2 px-2 cursor-pointer select-none" style="width:18%" onclick="anomSortBy('anomali')">Anomali <span class="anom-sort-arrow" data-sortkey="anomali"></span></th>
+                                <th class="py-2 px-2 cursor-pointer select-none" style="width:10%" onclick="anomSortBy('kecamatan')">Kecamatan <span class="anom-sort-arrow" data-sortkey="kecamatan"></span></th>
+                                <th class="py-2 px-2 cursor-pointer select-none" style="width:10%" onclick="anomSortBy('desa')">Desa <span class="anom-sort-arrow" data-sortkey="desa"></span></th>
+                                <th class="py-2 px-2 cursor-pointer select-none" style="width:15%" onclick="anomSortBy('petugas')">Petugas (email) <span class="anom-sort-arrow" data-sortkey="petugas"></span></th>
+                                <th class="py-2 px-2 text-center cursor-pointer select-none" style="width:9%" onclick="anomSortBy('status')">Status TL <span class="anom-sort-arrow" data-sortkey="status"></span></th>
+                                <th class="py-2 px-2 pr-3 text-center" style="width:9%">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="anom-tablemodal-body" class="text-indigo-950"><tr><td colspan="9" class="text-center py-8 text-indigo-200">—</td></tr></tbody>
@@ -674,7 +697,7 @@
         </div>
     </div>
 
-    <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-xs text-slate-400 border-t border-slate-200 mt-12">
+    <footer class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-xs text-slate-400 border-t border-slate-200 mt-4">
         Dashboard Monitoring Sensus Ekonomi 2026 • Kabupaten Lembata • Data hasil pencocokan database petugas dengan monitoring lapangan per desa.
     </footer>
 
@@ -727,6 +750,19 @@ function anomLabelWithCode(name){
   return (no!=null ? ('#'+no+' ') : '') + label;
 }
 
+// Batasi tinggi kontainer supaya hanya N baris yang tampil, sisanya discroll.
+function limitTableRows(id, n){
+  const box = document.getElementById(id);
+  if(!box) return;
+  const thead = box.querySelector('thead');
+  const rows  = box.querySelectorAll('tbody tr');
+  if(rows.length <= n){ box.style.height=''; box.style.maxHeight=''; return; }
+  let h = thead ? thead.offsetHeight : 0;
+  for(let i=0; i<n && rows[i]; i++) h += rows[i].offsetHeight;
+  box.style.height    = h + 'px';
+  box.style.maxHeight = h + 'px';
+}
+
 function switchView(v){
   const p = document.getElementById('view-progres');
   const a = document.getElementById('view-anomali');
@@ -736,13 +772,15 @@ function switchView(v){
   const off = 'text-indigo-100 hover:bg-indigo-700/60';
   if(v==='anomali'){
     p.hidden = true; a.hidden = false; a.classList.add('anom-fade');
-    ba.className = 'anom-tabbtn px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold '+on;
-    bp.className = 'anom-tabbtn px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold '+off;
+    ba.className = 'anom-tabbtn px-6 py-2 rounded-md text-xs sm:text-sm font-semibold '+on;
+    bp.className = 'anom-tabbtn px-6 py-2 rounded-md text-xs sm:text-sm font-semibold '+off;
     setTimeout(()=>{ if(anomChartKec) anomChartKec.resize(); if(anomChartJenis) anomChartJenis.resize(); }, 60);
+    setTimeout(()=>limitTableRows('anom-scroll', 20), 60);
   } else {
     a.hidden = true; p.hidden = false;
-    bp.className = 'anom-tabbtn px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold '+on;
-    ba.className = 'anom-tabbtn px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold '+off;
+    bp.className = 'anom-tabbtn px-6 py-2 rounded-md text-xs sm:text-sm font-semibold '+on;
+    ba.className = 'anom-tabbtn px-6 py-2 rounded-md text-xs sm:text-sm font-semibold '+off;
+    setTimeout(()=>limitTableRows('capaian-scroll', 20), 60);
   }
 }
 
@@ -947,7 +985,7 @@ function drawBar(canvasId, existing, labels, data, color, onClick, fullLabels){
         title:(items)=>{ const i=items[0].dataIndex; return fullLabels?fullLabels[i]:items[0].label; },
         label:c=>' '+c.parsed.y+' kasus'
       }}},
-      scales:{ x:{ticks:{font:{size:10,family:"'Plus Jakarta Sans', sans-serif"},maxRotation:60,minRotation:0}}, y:{beginAtZero:true,ticks:{precision:0,font:{family:"'Plus Jakarta Sans', sans-serif"}}} }
+      scales:{ x:{ticks:{font:{size:10,family:"'Plus Jakarta Sans', sans-serif"},maxRotation:60,minRotation:0}, grid:{color:'#cbd5e1'}}, y:{beginAtZero:true,ticks:{precision:0,font:{family:"'Plus Jakarta Sans', sans-serif"}}, grid:{color:'#cbd5e1'}} }
     }
   });
 }
@@ -1042,18 +1080,18 @@ function anomRowHTML(rows){
       : '<span class="text-[10px] font-bold text-violet-700">KELUARGA</span>';
     const petugas = (r.email||r.id_petugas) ? esc(r.email||r.id_petugas) : '<span class="text-slate-400 font-semibold">—</span>';
     const aksi = r.link_fasih
-      ? `<a href="${esc(r.link_fasih)}" target="_blank" rel="noopener" class="anom-chip inline-flex items-center gap-1 bg-indigo-700 hover:bg-indigo-600 text-white text-[10px] font-semibold px-2 py-1 rounded-md">Buka di FASIH ↗</a>`
+      ? `<a href="${esc(r.link_fasih)}" target="_blank" rel="noopener" class="anom-chip inline-flex items-center gap-1 bg-indigo-700 hover:bg-indigo-600 text-white text-[10px] font-semibold px-2 py-1 rounded-md whitespace-nowrap">Buka di FASIH ↗</a>`
       : '<span class="text-slate-300 text-xs">—</span>';
     const _aKet = (r.anomali||'').match(/\(([^)]+)\)/);
     const anomLabel = (r.anomali_no!=null?('#'+r.anomali_no+' '):'') + esc(_aKet ? '('+_aKet[1]+')' : (r.anomali||'-'));
     return `<tr class="anom-row">
       <td class="px-2 py-2 pl-3 text-slate-400">${i+1}</td>
       <td class="px-2 py-2">${jenis}</td>
-      <td class="px-2 py-2 font-medium text-slate-800">${esc(r.nama||'-')}</td>
-      <td class="px-2 py-2 text-slate-600">${anomLabel}</td>
-      <td class="px-2 py-2">${esc(r.kecamatan||'-')}</td>
-      <td class="px-2 py-2">${esc(r.desa||'-')}</td>
-      <td class="px-2 py-2 text-[11px]">${petugas}</td>
+      <td class="px-2 py-2 font-medium text-slate-800 truncate">${esc(r.nama||'-')}</td>
+      <td class="px-2 py-2 text-slate-600 truncate">${anomLabel}</td>
+      <td class="px-2 py-2 truncate">${esc(r.kecamatan||'-')}</td>
+      <td class="px-2 py-2 truncate">${esc(r.desa||'-')}</td>
+      <td class="px-2 py-2 text-[11px] truncate">${petugas}</td>
       <td class="px-2 py-2 text-center">${badge}</td>
       <td class="px-2 py-2 pr-3 text-center">${aksi}</td>
     </tr>`;
@@ -1096,6 +1134,7 @@ function anomRenderTable(rows){
   const tb=document.getElementById('anom-table-body'); if(tb) tb.innerHTML=html;
   const tm=document.getElementById('anom-tablemodal-body'); if(tm) tm.innerHTML=html;
   anomUpdateSortHeaders();
+  setTimeout(()=>limitTableRows('anom-scroll', 20), 0);
 }
 
 // ---- Modal TABEL fullscreen ----
@@ -1123,7 +1162,7 @@ function anomExportExcel(){
   const ws=XLSX.utils.aoa_to_sheet(data);
   ws['!cols']=[{wch:10},{wch:8},{wch:28},{wch:40},{wch:14},{wch:16},{wch:28},{wch:8},{wch:60}];
   const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,'Anomali',ws);
+  XLSX.utils.book_append_sheet(wb,ws,'Anomali');
   XLSX.writeFile(wb,'anomali_terfilter.xlsx');
 }
 
@@ -1155,6 +1194,8 @@ window.fetchData = function(){ location.reload(); };
 
 let progressChart=null, statusPieChart=null, approveRadarChart=null,
     rankingChart=null, gaugeChart=null, trendChart=null;
+let trendMode='kumulatif';      // 'kumulatif' (%) | 'harian' (dokumen)
+let pplTrendMode='kumulatif';   // toggle terpisah utk modal detail PPL
 let MERGED_HISTORY=[];   // riwayat final (lama + hari ini), 1 per hari
 
 const C = { open:'#3b82f6', draft:'#a855f7', submit:'#f59e0b', reject:'#ef4444', approve:'#10b981' };
@@ -1378,7 +1419,7 @@ function buildTrendChartCfg(ctx, big, noAnim){
         ]},
         options:{ responsive:true, maintainAspectRatio:false, animation:noAnim?false:undefined,
             interaction:{mode:'index',intersect:false},
-            scales:{ y:{ beginAtZero:true, ticks:{callback:v=>v+'%'} }, x:{ ticks:{font:{size:big?13:10},maxRotation:60,minRotation:0} } },
+            scales:{ y:{ beginAtZero:true, ticks:{callback:v=>v+'%'}, grid:{color:'#cbd5e1'} }, x:{ ticks:{font:{size:big?13:10},maxRotation:60,minRotation:0}, grid:{color:'#cbd5e1'} } },
             plugins:{ legend:{position:'bottom',labels:{font:{size:big?14:11},boxWidth:14}},
                 tooltip:{ callbacks:{ label:it=> ` ${it.dataset.label}: ${it.raw==null?'-':it.raw+'%'}` } } } } };
 }
@@ -1439,7 +1480,7 @@ function renderGauge(data, canvasId, chartSlot){
     if(!canvasId){ document.getElementById('gauge-value').innerText=`${pct.toFixed(1)}%`; }
     const cid=canvasId||'gaugeChart';
     const cfg={ type:'doughnut',
-        data:{ labels:['Sudah diproses','Belum'], datasets:[{ data:[pct,100-pct], backgroundColor:[pctColor(pct),'#e2e8f0'], borderWidth:0 }] },
+        data:{ labels:['Sudah diproses','Belum'], datasets:[{ data:[pct,100-pct], backgroundColor:[pctColor(pct),'#cbd5e1'], borderWidth:0 }] },
         options:{ rotation:-90, circumference:180, cutout:'75%', responsive:true, maintainAspectRatio:false,
             plugins:{ legend:{display:false}, tooltip:{ enabled: !!canvasId, callbacks:{ label:it=>` ${it.label}: ${it.raw.toFixed(1)}%` } } } } };
     const ctx=document.getElementById(cid).getContext('2d');
@@ -1464,7 +1505,7 @@ function renderRankingChart(data, canvasId, chartSlot){
     const cfg={ type:'bar',
         data:{ labels, datasets:[{ label:'% Progres', data:pcts, backgroundColor:colors, borderRadius:5, maxBarThickness:22 }] },
         options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
-            scales:{ x:{ beginAtZero:true, ticks:{callback:v=>v+'%'} }, y:{ ticks:{font:{size:canvasId?11:10}} } },
+            scales:{ x:{ beginAtZero:true, ticks:{callback:v=>v+'%'}, grid:{color:'#cbd5e1'} }, y:{ ticks:{font:{size:canvasId?11:10}}, grid:{color:'transparent'} } },
             plugins:{ legend:{display:false}, tooltip:{ callbacks:{ title:items=>arr[items[0].dataIndex].name, label:it=>`Progres: ${it.raw}% (beban ${fmt(arr[it.dataIndex].t)} dok)` } } } } };
     const ctx=document.getElementById(cid).getContext('2d');
     if(chartSlot){ const ch=new Chart(ctx,cfg); window.__modalChartRef=ch; }
@@ -1522,7 +1563,7 @@ function renderApproveRadar(data, canvasId, chartSlot){
     const ctx=document.getElementById(cid).getContext('2d');
     const opts={ responsive:true, maintainAspectRatio:false,
         scales:{ r:{ beginAtZero:true, suggestedMax,
-            angleLines:{color:'#e2e8f0'}, grid:{color:'#e2e8f0'},
+            angleLines:{color:'#cbd5e1'}, grid:{color:'#cbd5e1'},
             pointLabels:{ font:{size:canvasId?13:11,weight:'600'}, color:'#334155' },
             ticks:{ callback:v=>v+'%', backdropColor:'transparent', font:{size:canvasId?11:9}, color:'#94a3b8' } } },
         plugins:{ legend:{ display: mode==='banding', position:'bottom', labels:{font:{size:canvasId?13:11},boxWidth:14} },
@@ -1714,9 +1755,9 @@ function renderTable(data){
         const rowBg = idx%2===0 ? 'bg-white' : 'bg-indigo-50/40';
         html+=`<tr class="${rowBg} hover:bg-indigo-50 transition-colors">
             <td class="p-3 pl-4 text-xs text-slate-400">${idx+1}</td>
-            <td class="p-3 text-xs"><b>${it.korwil}</b><br><span class="text-slate-400">PML: ${it.pml}</span></td>
-            <td class="p-3 text-xs font-medium">${it.ppl}${multi}</td>
-            <td class="p-3 text-xs">${it.kec}<br><span class="text-slate-400">${it.desa}</span></td>
+            <td class="p-3 text-xs"><div class="truncate max-w-[190px]" title="${esc(it.korwil)}"><b>${it.korwil}</b></div><div class="truncate max-w-[190px] text-slate-400" title="PML: ${esc(it.pml)}">PML: ${it.pml}</div></td>
+            <td class="p-3 text-xs font-medium"><div class="flex items-center gap-1 max-w-[220px]"><span class="truncate min-w-0" title="${esc(it.ppl)}">${it.ppl}</span>${multi}</div></td>
+            <td class="p-3 text-xs"><div class="truncate max-w-[150px]" title="${esc(it.kec)}">${it.kec}</div><div class="truncate max-w-[150px] text-slate-400" title="${esc(it.desa)}">${it.desa}</div></td>
             <td class="p-3 text-center text-blue-600 text-xs">${it.open}</td>
             <td class="p-3 text-center text-purple-600 text-xs">${it.draft}</td>
             <td class="p-3 text-center text-amber-600 text-xs">${it.submit}</td>
@@ -1727,6 +1768,7 @@ function renderTable(data){
         </tr>`;
     });
     tb.innerHTML=html;
+    setTimeout(()=>limitTableRows('capaian-scroll', 20), 0);
 }
 
 // ===================== KECAMATAN DRILLDOWN =====================
